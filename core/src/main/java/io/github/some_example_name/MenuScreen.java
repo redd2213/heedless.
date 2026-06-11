@@ -1,17 +1,68 @@
 package io.github.some_example_name;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 /** First screen of the application. Displayed after the application is created. */
 public class MenuScreen implements Screen {
+    private Stage stage; //declared the Stage field.
+    private Skin skin;
+    private Main game;
+
+    public MenuScreen(Main game) {
+        this.game = game;
+    }
+
     @Override
     public void show() {
         // Prepare your screen here.
+        stage = new Stage(new ScreenViewport());// Initializing stage object.
+        skin = new Skin(Gdx.files.internal("pixthulhu/pixthulhu-ui.json"));
+
+        Table table = new Table();
+        table.setFillParent(true);
+        table.center();
+        stage.addActor(table);
+
+        //title label
+        Label titleLabel = new Label("Metroidvania-game", skin, "title");
+        table.add(titleLabel).row();
+
+        //play button
+        TextButton playButton = new TextButton("Play", skin);
+        table.add(playButton).row();
+        playButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                game.setScreen(new GameScreen());
+            }
+        });
+
+
+        //quit button
+        TextButton quitButton = new TextButton("Quit", skin);
+        table.add(quitButton).row();
+        quitButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                Gdx.app.exit();
+            }
+        });
+
+        Gdx.input.setInputProcessor(stage);
+
     }
 
     @Override
     public void render(float delta) {
         // Draw your screen here. "delta" is the time since last render in seconds.
+        stage.act(delta);
+        stage.draw();
     }
 
     @Override
@@ -21,6 +72,7 @@ public class MenuScreen implements Screen {
         if(width <= 0 || height <= 0) return;
 
         // Resize your screen here. The parameters represent the new window size.
+        stage.getViewport().update(width, height, true);
     }
 
     @Override
@@ -41,5 +93,7 @@ public class MenuScreen implements Screen {
     @Override
     public void dispose() {
         // Destroy screen's assets here.
+        stage.dispose();
+        skin.dispose();
     }
 }
