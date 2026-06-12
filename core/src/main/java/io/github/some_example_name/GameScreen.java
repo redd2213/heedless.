@@ -8,6 +8,9 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.ScreenUtils;
 
@@ -19,23 +22,35 @@ public class GameScreen implements Screen {
     private float playerY = 100;
     private float speed = 200; // pixels per second
     private OrthographicCamera camera;
+    private TiledMap map;
+    private OrthogonalTiledMapRenderer mapRenderer;
     @Override
     public void show() {
         // Prepare your screen here.
+        //player init
         batch = new SpriteBatch();
         Pixmap pixmap = new Pixmap(32, 32, Pixmap.Format.RGBA8888);
         pixmap.setColor(Color.RED);
         pixmap.fill();
         playerTexture = new Texture(pixmap);
         pixmap.dispose();
+
+        //fixes working buttons even after screen swap
         Gdx.input.setInputProcessor(null);
+
+        // camera setup
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+        //map import and init
+        map = new TmxMapLoader().load("map.tmx");
+        mapRenderer = new OrthogonalTiledMapRenderer(map);
     }
 
     @Override
     public void render(float delta) {
         // Draw your screen here. "delta" is the time since last render in seconds.
+        //WASD inputs
         if (Gdx.input.isKeyPressed(Input.Keys.D)) {
             playerX += speed * delta;
         }
@@ -52,19 +67,23 @@ public class GameScreen implements Screen {
             playerY -= speed * delta;
         }
 
+        //screen clamping
         playerX = MathUtils.clamp(playerX, 0, Gdx.graphics.getWidth() - playerTexture.getWidth());
         playerY = MathUtils.clamp(playerY, 0, Gdx.graphics.getHeight() - playerTexture.getHeight());
 
         ScreenUtils.clear(Color.BLACK);
 
+        //camera, map and player
         camera.position.set(playerX, playerY, 0);
         camera.update();
-        batch.setProjectionMatrix(camera.combined);
 
+        mapRenderer.setView(camera);
+        mapRenderer.render();
+
+        batch.setProjectionMatrix(camera.combined);
         batch.begin();
         batch.draw(playerTexture, playerX, playerY);
         batch.end();
-
     }
 
     @Override
