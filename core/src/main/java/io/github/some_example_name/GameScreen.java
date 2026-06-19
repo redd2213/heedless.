@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.MathUtils;
@@ -17,23 +18,23 @@ import com.badlogic.gdx.utils.ScreenUtils;
 /** First screen of the application. Displayed after the application is created. */
 public class GameScreen implements Screen {
     private SpriteBatch batch;
-    private Texture playerTexture;
-    private float playerX = 100;
-    private float playerY = 100;
-    private float speed = 200; // pixels per second
+    private Player player;
     private OrthographicCamera camera;
     private TiledMap map;
     private OrthogonalTiledMapRenderer mapRenderer;
+    private TiledMapTileLayer layer;
+    private Main game;
+
+    public GameScreen(Main game) {
+        this.game = game;
+    }
+
     @Override
     public void show() {
         // Prepare your screen here.
         //player init
         batch = new SpriteBatch();
-        Pixmap pixmap = new Pixmap(32, 32, Pixmap.Format.RGBA8888);
-        pixmap.setColor(Color.RED);
-        pixmap.fill();
-        playerTexture = new Texture(pixmap);
-        pixmap.dispose();
+        player = new Player();
 
         //fixes working buttons even after screen swap
         Gdx.input.setInputProcessor(null);
@@ -45,36 +46,20 @@ public class GameScreen implements Screen {
         //map import and init
         map = new TmxMapLoader().load("map.tmx");
         mapRenderer = new OrthogonalTiledMapRenderer(map);
+        layer = (TiledMapTileLayer) map.getLayers().get("Tile Layer 1");
     }
 
     @Override
     public void render(float delta) {
         // Draw your screen here. "delta" is the time since last render in seconds.
+
         //WASD inputs
-        if (Gdx.input.isKeyPressed(Input.Keys.D)) {
-            playerX += speed * delta;
-        }
-
-        if (Gdx.input.isKeyPressed(Input.Keys.A)) {
-            playerX -= speed * delta;
-        }
-
-        if (Gdx.input.isKeyPressed(Input.Keys.W)) {
-            playerY += speed * delta;
-        }
-
-        if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-            playerY -= speed * delta;
-        }
-
-        //screen clamping
-        playerX = MathUtils.clamp(playerX, 0, Gdx.graphics.getWidth() - playerTexture.getWidth());
-        playerY = MathUtils.clamp(playerY, 0, Gdx.graphics.getHeight() - playerTexture.getHeight());
+        player.update(delta, layer);
 
         ScreenUtils.clear(Color.BLACK);
 
         //camera, map and player
-        camera.position.set(playerX, playerY, 0);
+        camera.position.set(player.getX(), player.getY(), 0);
         camera.update();
 
         mapRenderer.setView(camera);
@@ -82,7 +67,7 @@ public class GameScreen implements Screen {
 
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        batch.draw(playerTexture, playerX, playerY);
+        batch.draw(player.getTexture(), player.getX(), player.getY());
         batch.end();
     }
 
@@ -113,5 +98,8 @@ public class GameScreen implements Screen {
     @Override
     public void dispose() {
         // Destroy screen's assets here.
+        batch.dispose();
+        map.dispose();
+        mapRenderer.dispose();
     }
 }

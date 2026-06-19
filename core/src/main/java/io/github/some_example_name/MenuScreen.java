@@ -30,7 +30,7 @@ public class MenuScreen implements Screen {
         stage.addActor(table);
 
         //title label
-        Label titleLabel = new Label("Metroidvania-game", skin, "title");
+        Label titleLabel = new Label("metroidvania-game", skin, "title");
         table.add(titleLabel).row();
 
         //play button
@@ -39,7 +39,7 @@ public class MenuScreen implements Screen {
         playButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                game.setScreen(new GameScreen());
+                game.setScreen(new GameScreen(game));
             }
         });
 
