@@ -2,11 +2,12 @@ package io.github.some_example_name;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.utils.Array;
 
 public class Player {
     private float x = 100;
@@ -19,12 +20,24 @@ public class Player {
     private static final float GRAVITY = -500f;
     private static final float JUMP_VELOCITY = 430f;
 
+    //animation fields
+    public enum State { IDLE, WALK, JUMP, FALL }
+    private State currentState = State.IDLE;
+    private float stateTime = 0f;
+    private boolean facingRight = true;
+    public static final int FRAME_WIDTH = 82;
+    public static final int FRAME_HEIGHT = 60;
+
+    private Animation<TextureRegion> idleAnim;
+    private Animation<TextureRegion> walkAnim;
+    private Animation<TextureRegion> jumpAnim;
+    private Animation<TextureRegion> fallAnim;
+
     public Player() {
-        Pixmap pixmap = new Pixmap(32, 32, Pixmap.Format.RGBA8888);
-        pixmap.setColor(Color.RED);
-        pixmap.fill();
-        texture = new Texture(pixmap);
-        pixmap.dispose();
+        idleAnim = loadAnimation("Assets/SPRITES/player/Idle/spritesheet.png", 4, 0.15f);
+        walkAnim = loadAnimation("Assets/SPRITES/player/Walk/spritesheet.png", 6, 0.1f);
+        jumpAnim = loadAnimation("Assets/SPRITES/player/Jump/spritesheet.png", 2, 0.1f);
+        fallAnim = loadAnimation("Assets/SPRITES/player/Fall/spritesheet.png", 2, 0.15f);
 
         bounds.setSize(32, 32);
         bounds.setPosition(x, y);
@@ -36,10 +49,12 @@ public class Player {
         float oldX = x;
         if (Gdx.input.isKeyPressed(Input.Keys.D)) {
             x += speed * delta;
+            facingRight = true;
         }
 
         if (Gdx.input.isKeyPressed(Input.Keys.A)) {
             x -= speed * delta;
+            facingRight = false;
         }
 
         bounds.setPosition(x, y);
@@ -68,6 +83,16 @@ public class Player {
         if (Gdx.input.isKeyJustPressed(Input.Keys.W) && isGrounded) {
             velocityY = JUMP_VELOCITY;
         }
+
+        if (!isGrounded && velocityY > 0) {
+            currentState = State.JUMP;
+        } else if (!isGrounded && velocityY < 0) {
+            currentState = State.FALL;
+        } else if (x != oldX) {
+            currentState = State.WALK;
+        } else {
+            currentState = State.IDLE;
+        }
     }
 
     private boolean isColliding(TiledMapTileLayer layer) {
@@ -85,6 +110,38 @@ public class Player {
             }
         }
         return false;
+    }
+
+    private Animation<TextureRegion> loadAnimation(String path, int cols, float frameDuration) {
+        Texture sheet = new Texture(Gdx.files.internal(path));
+        TextureRegion[][] tmp = TextureRegion.split(sheet, sheet.getWidth() / cols, sheet.getHeight());
+        Array<TextureRegion> frames = new Array<>();
+        for (int i=0; i < cols; i++) {
+            frames.add(tmp[0][i]);
+        }
+        return new Animation<>(frameDuration, frames);
+    }
+
+    public TextureRegion getCurrentFrame(float delta) {
+        stateTime += delta;
+
+        Animation<TextureRegion> anim;
+        switch (currentState) {
+            case WALK: anim = walkAnim; break;
+            case JUMP: anim = jumpAnim; break;
+            case FALL: anim = fallAnim; break;
+            default: anim = idleAnim; break;
+        }
+
+        // player facing left/right
+        TextureRegion frame = anim.getKeyFrame(stateTime, true);
+
+        if (facingRight && frame.isFlipX()) {
+            frame.flip(true, false);
+        } else if (!facingRight && !frame.isFlipX()) {
+            frame.flip(true, false);
+        }
+        return frame;
     }
 
     public float getX() {
