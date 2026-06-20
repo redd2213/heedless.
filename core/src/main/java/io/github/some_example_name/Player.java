@@ -14,11 +14,14 @@ public class Player {
     private float y = 100;
     private float speed = 200;
     private float velocityY = 0;
+    private float velocityX = 0f;
     private boolean isGrounded = false;
     private Texture texture;
     private Rectangle bounds = new Rectangle();
     private static final float GRAVITY = -500f;
     private static final float JUMP_VELOCITY = 430f;
+    private float invincibilityTimer = 0f;
+    private static final float INVINCIBILITY_DURATION = 2.0f;
 
     //animation fields
     public enum State { IDLE, WALK, JUMP, FALL }
@@ -61,6 +64,15 @@ public class Player {
         if (isColliding(layer)) {
             x = oldX;
             bounds.setPosition(x, y);
+        }
+
+        // apply velocityX for knockback when player is hit
+        x += velocityX * delta;
+        velocityX *= 0.9f; //slowdown for accurate knockback simulation
+
+        //invincibility counter after being hit
+        if (invincibilityTimer > 0) {
+            invincibilityTimer -= delta;
         }
 
         //apply gravity
@@ -142,6 +154,19 @@ public class Player {
             frame.flip(true, false);
         }
         return frame;
+    }
+
+    public void applyKnockback(float directionX) {
+        velocityX = directionX * 1000f;
+        velocityY = 100f;
+    }
+
+    public boolean isInvincible() {
+        return invincibilityTimer > 0;
+    }
+
+    public void triggerInvincibility() {
+        invincibilityTimer = INVINCIBILITY_DURATION;
     }
 
     public float getX() {

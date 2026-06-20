@@ -20,6 +20,7 @@ public class GameScreen implements Screen {
     private OrthogonalTiledMapRenderer mapRenderer;
     private TiledMapTileLayer layer;
     private Main game;
+    private Enemy enemy;
 
     public GameScreen(Main game) {
         this.game = game;
@@ -43,6 +44,9 @@ public class GameScreen implements Screen {
         map = new TmxMapLoader().load("map.tmx");
         mapRenderer = new OrthogonalTiledMapRenderer(map);
         layer = (TiledMapTileLayer) map.getLayers().get("Tile Layer 1");
+
+        // enemy init
+        enemy = new Enemy(16, 256, 16, 496);
     }
 
     @Override
@@ -64,7 +68,18 @@ public class GameScreen implements Screen {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         batch.draw(player.getCurrentFrame(delta), player.getX() - (Player.FRAME_WIDTH -32) /2f, player.getY());
+
+        //enemy
+        enemy.update(delta);
+        batch.draw(enemy.getCurrentFrame(), enemy.getX() - (Enemy.FRAME_WIDTH -32) /2f, enemy.getY());
         batch.end();
+
+        // player hit by enemy
+        if(player.getBounds().overlaps(enemy.getBounds())) {
+            float direction = player.getX() > enemy.getX() ? 1 : -1;
+            player.applyKnockback(direction);
+            player.triggerInvincibility();
+        }
     }
 
     @Override
