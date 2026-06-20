@@ -1,70 +1,85 @@
 package io.github.some_example_name;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 /** First screen of the application. Displayed after the application is created. */
 public class GameScreen implements Screen {
     private SpriteBatch batch;
-    private Texture playerTexture;
-    private float playerX = 100;
-    private float playerY = 100;
-    private float speed = 200; // pixels per second
+    private Player player;
     private OrthographicCamera camera;
+    private TiledMap map;
+    private OrthogonalTiledMapRenderer mapRenderer;
+    private TiledMapTileLayer layer;
+    private Main game;
+    private Enemy enemy;
+
+    public GameScreen(Main game) {
+        this.game = game;
+    }
+
     @Override
     public void show() {
         // Prepare your screen here.
+        //player init
         batch = new SpriteBatch();
-        Pixmap pixmap = new Pixmap(32, 32, Pixmap.Format.RGBA8888);
-        pixmap.setColor(Color.RED);
-        pixmap.fill();
-        playerTexture = new Texture(pixmap);
-        pixmap.dispose();
+        player = new Player();
+
+        //fixes working buttons even after screen swap
         Gdx.input.setInputProcessor(null);
+
+        // camera setup
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+        //map import and init
+        map = new TmxMapLoader().load("map.tmx");
+        mapRenderer = new OrthogonalTiledMapRenderer(map);
+        layer = (TiledMapTileLayer) map.getLayers().get("Tile Layer 1");
+
+        // enemy init
+        enemy = new Enemy(16, 256, 16, 496);
     }
 
     @Override
     public void render(float delta) {
         // Draw your screen here. "delta" is the time since last render in seconds.
-        if (Gdx.input.isKeyPressed(Input.Keys.D)) {
-            playerX += speed * delta;
-        }
 
-        if (Gdx.input.isKeyPressed(Input.Keys.A)) {
-            playerX -= speed * delta;
-        }
-
-        if (Gdx.input.isKeyPressed(Input.Keys.W)) {
-            playerY += speed * delta;
-        }
-
-        if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-            playerY -= speed * delta;
-        }
-
-        playerX = MathUtils.clamp(playerX, 0, Gdx.graphics.getWidth() - playerTexture.getWidth());
-        playerY = MathUtils.clamp(playerY, 0, Gdx.graphics.getHeight() - playerTexture.getHeight());
+        //WASD inputs
+        player.update(delta, layer);
 
         ScreenUtils.clear(Color.BLACK);
 
-        camera.position.set(playerX, playerY, 0);
+        //camera, map and player
+        camera.position.set(player.getX(), player.getY(), 0);
         camera.update();
-        batch.setProjectionMatrix(camera.combined);
 
+        mapRenderer.setView(camera);
+        mapRenderer.render();
+
+        batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        batch.draw(playerTexture, playerX, playerY);
+        batch.draw(player.getCurrentFrame(delta), player.getX() - (Player.FRAME_WIDTH -32) /2f, player.getY());
+
+        //enemy
+        enemy.update(delta);
+        batch.draw(enemy.getCurrentFrame(), enemy.getX() - (Enemy.FRAME_WIDTH -32) /2f, enemy.getY());
         batch.end();
 
+        // player hit by enemy
+        if(player.getBounds().overlaps(enemy.getBounds())) {
+            float direction = player.getX() > enemy.getX() ? 1 : -1;
+            player.applyKnockback(direction);
+            player.triggerInvincibility();
+        }
     }
 
     @Override
@@ -94,5 +109,8 @@ public class GameScreen implements Screen {
     @Override
     public void dispose() {
         // Destroy screen's assets here.
+        batch.dispose();
+        map.dispose();
+        mapRenderer.dispose();
     }
 }
