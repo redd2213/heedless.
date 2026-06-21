@@ -4,8 +4,17 @@ import com.badlogic.gdx.Game;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Main extends Game {
+    public DatabaseManager database;
+
     @Override
     public void create() {
-        setScreen(new MenuScreen(this));
+        database = new DatabaseManager();
+        setScreen(new LoginScreen(this));
+    }
+
+    @Override
+    public void dispose() {
+        database.close();
+        super.dispose();
     }
 }
