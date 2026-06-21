@@ -9,7 +9,11 @@ import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 /** First screen of the application. Displayed after the application is created. */
 public class GameScreen implements Screen {
@@ -21,6 +25,10 @@ public class GameScreen implements Screen {
     private TiledMapTileLayer layer;
     private Main game;
     private Enemy enemy;
+    private OrthographicCamera hudCamera;
+    private Stage hudStage;
+    private Label healthLabel;
+    private Skin skin;
 
     public GameScreen(Main game) {
         this.game = game;
@@ -29,6 +37,9 @@ public class GameScreen implements Screen {
     @Override
     public void show() {
         // Prepare your screen here.
+        //skin init
+        skin = new Skin(Gdx.files.internal("pixthulhu/pixthulhu-ui.json"));
+
         //player init
         batch = new SpriteBatch();
         player = new Player();
@@ -47,6 +58,16 @@ public class GameScreen implements Screen {
 
         // enemy init
         enemy = new Enemy(16, 256, 16, 496);
+
+        //hud camera setup
+        hudCamera = new OrthographicCamera();
+        hudCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+        //hud init
+        hudStage = new Stage(new ScreenViewport());
+        healthLabel = new Label("HP: " + player.getCurrentHealth(), skin);
+        healthLabel.setPosition(20, Gdx.graphics.getHeight() -40);
+        hudStage.addActor(healthLabel);
     }
 
     @Override
@@ -56,23 +77,8 @@ public class GameScreen implements Screen {
         //WASD inputs
         player.update(delta, layer);
 
-        ScreenUtils.clear(Color.BLACK);
-
-        //camera, map and player
-        camera.position.set(player.getX(), player.getY(), 0);
-        camera.update();
-
-        mapRenderer.setView(camera);
-        mapRenderer.render();
-
-        batch.setProjectionMatrix(camera.combined);
-        batch.begin();
-        batch.draw(player.getCurrentFrame(delta), player.getX() - (Player.FRAME_WIDTH -32) /2f, player.getY());
-
         //enemy
         enemy.update(delta);
-        batch.draw(enemy.getCurrentFrame(), enemy.getX() - (Enemy.FRAME_WIDTH -32) /2f, enemy.getY());
-        batch.end();
 
         // player hit by enemy
         if(player.getBounds().overlaps(enemy.getBounds())) {
@@ -85,6 +91,31 @@ public class GameScreen implements Screen {
         if (player.isDead()) {
             game.setScreen(new GameOverScreen(game));
         }
+
+        ScreenUtils.clear(Color.BLACK);
+
+
+        //camera, map and player
+        camera.position.set(player.getX(), player.getY(), 0);
+        camera.update();
+
+        mapRenderer.setView(camera);
+        mapRenderer.render();
+
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+
+        //draw for player and enemy
+        batch.draw(player.getCurrentFrame(delta), player.getX() - (Player.FRAME_WIDTH -32) /2f, player.getY());
+        batch.draw(enemy.getCurrentFrame(), enemy.getX() - (Enemy.FRAME_WIDTH -32) /2f, enemy.getY());
+
+        batch.end();
+
+        //hud health
+        healthLabel.setText("HP: " + player.getCurrentHealth() + "/ 5");
+        hudStage.act(delta);
+        hudStage.draw();
+
     }
 
     @Override
@@ -117,5 +148,7 @@ public class GameScreen implements Screen {
         batch.dispose();
         map.dispose();
         mapRenderer.dispose();
+        hudStage.dispose();
+        skin.dispose();
     }
 }
