@@ -78,7 +78,12 @@ public class GameScreen implements Screen {
         if(player.getBounds().overlaps(enemy.getBounds())) {
             float direction = player.getX() > enemy.getX() ? 1 : -1;
             player.applyKnockback(direction);
-            player.triggerInvincibility();
+            player.takeDamage(1);
+        }
+
+        // death check
+        if (player.isDead()) {
+            game.setScreen(new GameOverScreen(game));
         }
     }
 
