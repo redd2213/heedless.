@@ -1,17 +1,74 @@
 package io.github.some_example_name;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import org.w3c.dom.Text;
 
 /** First screen of the application. Displayed after the application is created. */
 public class GameOverScreen implements Screen {
+    private Main game;
+    private Stage stage;
+    private Skin skin;
+    private float titleAlpha = 0f;
+    private float buttonAlpha = 0f;
+    private Label titleLabel;
+    private TextButton rtmButton;
+
+    public GameOverScreen(Main game) {
+        this.game = game;
+    }
     @Override
     public void show() {
         // Prepare your screen here.
+        stage = new Stage(new ScreenViewport());
+        skin = new Skin(Gdx.files.internal("pixthulhu/pixthulhu-ui.json"));
+
+        Table table = new Table();
+        table.setFillParent(true);
+        table.center();
+        stage.addActor(table);
+
+        //title label
+        titleLabel = new Label("YOU DIED.", skin, "title", Color.RED);
+        table.add(titleLabel).padBottom(150).row();
+
+        //return to menu button
+        rtmButton = new TextButton("Return to menu", skin);
+        rtmButton.getLabel().setFontScale(0.7f);
+        table.add(rtmButton).size(300, 100).row();
+        rtmButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                game.setScreen(new MenuScreen(game));
+            }
+        });
+
+        Gdx.input.setInputProcessor(stage);
     }
 
     @Override
     public void render(float delta) {
         // Draw your screen here. "delta" is the time since last render in seconds.
+        ScreenUtils.clear(Color.BLACK);
+        stage.act(delta);
+        stage.draw();
+        //alpha modifiers for fading effect (title and button)
+        titleAlpha = Math.min(titleAlpha + delta * 0.2f, 1f);
+        if (titleAlpha >= 1f) {
+            buttonAlpha = Math.min(buttonAlpha + delta * 0.5f, 1f);
+        }
+        titleLabel.setColor(1, 0, 0, titleAlpha);
+        rtmButton.setColor(1, 1, 1, buttonAlpha);
     }
 
     @Override
@@ -21,6 +78,7 @@ public class GameOverScreen implements Screen {
         if(width <= 0 || height <= 0) return;
 
         // Resize your screen here. The parameters represent the new window size.
+        stage.getViewport().update(width, height, true);
     }
 
     @Override
@@ -41,5 +99,7 @@ public class GameOverScreen implements Screen {
     @Override
     public void dispose() {
         // Destroy screen's assets here.
+        stage.dispose();
+        skin.dispose();
     }
 }

@@ -21,7 +21,9 @@ public class Player {
     private static final float GRAVITY = -500f;
     private static final float JUMP_VELOCITY = 430f;
     private float invincibilityTimer = 0f;
-    private static final float INVINCIBILITY_DURATION = 2.0f;
+    private static final float INVINCIBILITY_DURATION = 0.0f; //switched to lower invincibility duration for damage testing purposes.
+    private int maxHealth = 5;
+    private int currentHealth = 5;
 
     //animation fields
     public enum State { IDLE, WALK, JUMP, FALL }
@@ -195,5 +197,20 @@ public class Player {
 
     public Texture getTexture() {
         return texture;
+    }
+
+    public int getCurrentHealth() {
+        return currentHealth;
+    }
+
+    public boolean isDead() {
+        return currentHealth <= 0;
+    }
+
+    public void takeDamage(int amount) {
+        if (!isInvincible()) {
+            currentHealth -= amount;
+            triggerInvincibility();
+        }
     }
 }
