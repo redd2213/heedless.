@@ -224,10 +224,6 @@ public class Player {
         return isGrounded;
     }
 
-    public Texture getTexture() {
-        return texture;
-    }
-
     public boolean isAttacking() {
         return isAttacking;
     }

@@ -14,7 +14,7 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 /** First screen of the application. Displayed after the application is created. */
-public class GameOverScreen implements Screen {
+public class WinScreen implements Screen {
     private Main game;
     private Stage stage;
     private Skin skin;
@@ -23,7 +23,7 @@ public class GameOverScreen implements Screen {
     private Label titleLabel;
     private TextButton rtmButton;
 
-    public GameOverScreen(Main game) {
+    public WinScreen(Main game) {
         this.game = game;
     }
     @Override
@@ -38,7 +38,7 @@ public class GameOverScreen implements Screen {
         stage.addActor(table);
 
         //title label
-        titleLabel = new Label("YOU DIED.", skin, "title", Color.RED);
+        titleLabel = new Label("RUN COMPLETED.", skin, "title");
         table.add(titleLabel).padBottom(150).row();
 
         //return to menu button
@@ -66,7 +66,7 @@ public class GameOverScreen implements Screen {
         if (titleAlpha >= 1f) {
             buttonAlpha = Math.min(buttonAlpha + delta * 0.5f, 1f);
         }
-        titleLabel.setColor(1, 0, 0, titleAlpha);
+        titleLabel.setColor(0, 1, 1, titleAlpha);
         rtmButton.setColor(1, 1, 1, buttonAlpha);
     }
 

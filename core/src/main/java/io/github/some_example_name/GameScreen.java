@@ -99,6 +99,11 @@ public class GameScreen implements Screen {
             game.setScreen(new GameOverScreen(game));
         }
 
+        // win check (temp)
+        if (enemy.isDead()) {
+            game.setScreen(new WinScreen(game));
+        }
+
         ScreenUtils.clear(Color.BLACK);
 
 
