@@ -22,6 +22,12 @@ public class Enemy {
     public static final int FRAME_WIDTH = 57;
     public static final int FRAME_HEIGHT = 60;
 
+    private int maxHealth = 3;
+    private int currentHealth= 3;
+    private boolean isDead = false;
+    private float invincibilityTimer = 0f;
+    private static final float INVINCIBILITY_DURATION = 0.3f;
+
     //constructor
     public Enemy(float x, float y, float patrolLeft, float patrolRight) {
         this.x = x;
@@ -62,6 +68,11 @@ public class Enemy {
         // keeping bounds synced
         bounds.setPosition(x, y);
         stateTime += delta;
+
+        //invincibility timer
+        if (invincibilityTimer > 0) {
+            invincibilityTimer -= delta;
+        }
     }
 
     public TextureRegion getCurrentFrame() {
@@ -75,6 +86,16 @@ public class Enemy {
         return frame;
     }
 
+    public void takeDamage(int amount) {
+        if (invincibilityTimer <= 0) {
+            currentHealth -= amount;
+            invincibilityTimer = INVINCIBILITY_DURATION;
+            if (currentHealth <= 0) {
+                isDead = true;
+            }
+        }
+    }
+
     //getters
     public float getX() {
         return x;
@@ -86,5 +107,13 @@ public class Enemy {
 
     public Rectangle getBounds() {
         return bounds;
+    }
+
+    public boolean isDead() {
+        return isDead;
+    }
+
+    public int getCurrentHealth() {
+        return currentHealth;
     }
 }

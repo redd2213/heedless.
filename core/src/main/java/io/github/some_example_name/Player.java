@@ -16,7 +16,6 @@ public class Player {
     private float velocityY = 0;
     private float velocityX = 0f;
     private boolean isGrounded = false;
-    private Texture texture;
     private Rectangle bounds = new Rectangle();
     private static final float GRAVITY = -500f;
     private static final float JUMP_VELOCITY = 430f;
@@ -24,9 +23,14 @@ public class Player {
     private static final float INVINCIBILITY_DURATION = 0.0f; //switched to lower invincibility duration for damage testing purposes.
     private int maxHealth = 5;
     private int currentHealth = 5;
+    private Rectangle attackHitbox = new Rectangle();
+    private float attackTimer=0f;
+    private boolean isAttacking = false;
+    private static final float ATTACK_DURATION = 0.48f;
+    private static final float ATTACK_RANGE = 50f;
 
     //animation fields
-    public enum State { IDLE, WALK, JUMP, FALL }
+    public enum State { IDLE, WALK, JUMP, FALL, PUNCH }
     private State currentState = State.IDLE;
     private float stateTime = 0f;
     private boolean facingRight = true;
@@ -37,12 +41,14 @@ public class Player {
     private Animation<TextureRegion> walkAnim;
     private Animation<TextureRegion> jumpAnim;
     private Animation<TextureRegion> fallAnim;
+    private Animation<TextureRegion> punchAnim;
 
     public Player() {
         idleAnim = loadAnimation("Assets/SPRITES/player/Idle/spritesheet.png", 4, 0.15f);
         walkAnim = loadAnimation("Assets/SPRITES/player/Walk/spritesheet.png", 6, 0.1f);
         jumpAnim = loadAnimation("Assets/SPRITES/player/Jump/spritesheet.png", 2, 0.1f);
         fallAnim = loadAnimation("Assets/SPRITES/player/Fall/spritesheet.png", 2, 0.15f);
+        punchAnim = loadAnimation("Assets/SPRITES/player/Punch/spritesheet.png", 6, 0.08f);
 
         bounds.setSize(32, 32);
         bounds.setPosition(x, y);
@@ -98,7 +104,9 @@ public class Player {
             velocityY = JUMP_VELOCITY;
         }
 
-        if (!isGrounded && velocityY > 0) {
+        if (isAttacking) {
+            currentState = State.PUNCH;
+        } else if (!isGrounded && velocityY > 0) {
             currentState = State.JUMP;
         } else if (!isGrounded && velocityY < 0) {
             currentState = State.FALL;
@@ -106,6 +114,26 @@ public class Player {
             currentState = State.WALK;
         } else {
             currentState = State.IDLE;
+        }
+
+        //attacking
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && !isAttacking) {
+            isAttacking = true;
+            attackTimer = ATTACK_DURATION;
+            stateTime = 0f; //for animation reset
+        }
+
+        if (isAttacking) {
+            attackTimer -= delta;
+            if (facingRight) {
+                attackHitbox.set(x + 32, y, ATTACK_RANGE, 32);
+            } else {
+                attackHitbox.set(x - 32, y, ATTACK_RANGE, 32);
+            }
+            if (attackTimer <= 0) {
+                isAttacking = false;
+                attackHitbox.set(0, 0, 0, 0);
+            }
         }
     }
 
@@ -144,6 +172,7 @@ public class Player {
             case WALK: anim = walkAnim; break;
             case JUMP: anim = jumpAnim; break;
             case FALL: anim = fallAnim; break;
+            case PUNCH: anim = punchAnim; break;
             default: anim = idleAnim; break;
         }
 
@@ -197,6 +226,14 @@ public class Player {
 
     public Texture getTexture() {
         return texture;
+    }
+
+    public boolean isAttacking() {
+        return isAttacking;
+    }
+
+    public Rectangle getAttackHitbox() {
+        return attackHitbox;
     }
 
     public int getCurrentHealth() {

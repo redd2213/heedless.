@@ -78,13 +78,20 @@ public class GameScreen implements Screen {
         player.update(delta, layer);
 
         //enemy
-        enemy.update(delta);
+        if (!enemy.isDead()) {
+            enemy.update(delta);
+        }
 
         // player hit by enemy
-        if(player.getBounds().overlaps(enemy.getBounds())) {
+        if(!enemy.isDead() && player.getBounds().overlaps(enemy.getBounds())) {
             float direction = player.getX() > enemy.getX() ? 1 : -1;
             player.applyKnockback(direction);
             player.takeDamage(1);
+        }
+
+        //enemy hit by player
+        if (player.isAttacking() && player.getAttackHitbox().overlaps(enemy.getBounds())) {
+            enemy.takeDamage(1);
         }
 
         // death check
@@ -107,7 +114,12 @@ public class GameScreen implements Screen {
 
         //draw for player and enemy
         batch.draw(player.getCurrentFrame(delta), player.getX() - (Player.FRAME_WIDTH -32) /2f, player.getY());
-        batch.draw(enemy.getCurrentFrame(), enemy.getX() - (Enemy.FRAME_WIDTH -32) /2f, enemy.getY());
+
+        if (!enemy.isDead()) {
+            batch.draw(enemy.getCurrentFrame(),
+                enemy.getX() - (Enemy.FRAME_WIDTH -32)/ 2f,
+                enemy.getY());
+        }
 
         batch.end();
 
