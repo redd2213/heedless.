@@ -22,6 +22,7 @@ public class WinScreen implements Screen {
     private float buttonAlpha = 0f;
     private Label titleLabel;
     private TextButton rtmButton;
+    private TextButton replayButton;
 
     public WinScreen(Main game) {
         this.game = game;
@@ -44,11 +45,22 @@ public class WinScreen implements Screen {
         //return to menu button
         rtmButton = new TextButton("Return to menu", skin);
         rtmButton.getLabel().setFontScale(0.7f);
-        table.add(rtmButton).size(300, 100).row();
+        table.add(rtmButton).size(300, 100).padBottom(25).row();
         rtmButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 game.setScreen(new MenuScreen(game));
+            }
+        });
+
+        //replay button
+        replayButton = new TextButton("Watch Replay", skin);
+        replayButton.getLabel().setFontScale(0.7f);
+        table.add(replayButton).size(300, 100).row();
+        replayButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                game.setScreen(new ReplayScreen(game, 1)); // the hardcoded userId
             }
         });
 
@@ -68,6 +80,7 @@ public class WinScreen implements Screen {
         }
         titleLabel.setColor(0, 1, 1, titleAlpha);
         rtmButton.setColor(1, 1, 1, buttonAlpha);
+        replayButton.setColor(1, 1, 1, buttonAlpha);
     }
 
     @Override

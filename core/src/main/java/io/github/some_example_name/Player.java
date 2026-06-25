@@ -192,6 +192,39 @@ public class Player {
         velocityY = 100f;
     }
 
+    public void updateReplay(float delta, TiledMapTileLayer layer,
+                             boolean left, boolean right, boolean jump) {
+        isGrounded = false;
+        float oldX = x;
+
+        if (right) { x += speed * delta; facingRight = true; }
+        if (left)  { x -= speed * delta; facingRight = false; }
+
+        bounds.setPosition(x, y);
+        if (isColliding(layer)) {
+            x = oldX;
+            bounds.setPosition(x, y);
+        }
+
+        velocityY += GRAVITY * delta;
+        float oldY = y;
+        y += velocityY * delta;
+        bounds.setPosition(x, y);
+
+        if (isColliding(layer)) {
+            if (velocityY < 0) isGrounded = true;
+            y = oldY;
+            velocityY = 0;
+        }
+
+        if (jump && isGrounded) velocityY = JUMP_VELOCITY;
+
+        if (!isGrounded && velocityY > 0) currentState = State.JUMP;
+        else if (!isGrounded && velocityY < 0) currentState = State.FALL;
+        else if (x != oldX) currentState = State.WALK;
+        else currentState = State.IDLE;
+    }
+
     public boolean isInvincible() {
         return invincibilityTimer > 0;
     }

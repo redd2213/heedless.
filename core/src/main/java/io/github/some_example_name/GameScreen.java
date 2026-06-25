@@ -1,6 +1,7 @@
 package io.github.some_example_name;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -29,6 +30,8 @@ public class GameScreen implements Screen {
     private Stage hudStage;
     private Label healthLabel;
     private Skin skin;
+    private InputRecorder recorder;
+    private int currentUserId = 1; //hardcoded, will wire to login later
 
     public GameScreen(Main game) {
         this.game = game;
@@ -68,6 +71,10 @@ public class GameScreen implements Screen {
         healthLabel = new Label("HP: " + player.getCurrentHealth(), skin);
         healthLabel.setPosition(20, Gdx.graphics.getHeight() -40);
         hudStage.addActor(healthLabel);
+
+        recorder = new InputRecorder();
+        Gdx.input.setInputProcessor(recorder);
+        recorder.startRecording();
     }
 
     @Override
@@ -101,8 +108,21 @@ public class GameScreen implements Screen {
 
         // win check (temp)
         if (enemy.isDead()) {
+            recorder.stopRecording();
+            for (InputRecord record : recorder.getRecords()) {
+                game.database.saveInputRecord(
+                    currentUserId,
+                    record.timestamp,
+                    record.keycode,
+                    record.pressed,
+                    recorder.getTimer()
+                );
+            }
             game.setScreen(new WinScreen(game));
         }
+
+        //recorder
+        recorder.update(delta);
 
         ScreenUtils.clear(Color.BLACK);
 
