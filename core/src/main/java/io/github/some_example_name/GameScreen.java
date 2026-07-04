@@ -59,8 +59,9 @@ public class GameScreen implements Screen {
         Gdx.input.setInputProcessor(null);
 
         // camera setup
+        float zoomFactor = 1.4f; // camera zoom because the pixel art is relatively small compared to global res
         camera = new OrthographicCamera();
-        camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        camera.setToOrtho(false, Gdx.graphics.getWidth() / zoomFactor, Gdx.graphics.getHeight() / zoomFactor);
 
         //map import and init
         map = new TmxMapLoader().load("map.tmx");
