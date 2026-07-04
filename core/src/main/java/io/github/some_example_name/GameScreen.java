@@ -36,6 +36,10 @@ public class GameScreen implements Screen {
     private InputRecorder recorder;
     private int currentUserId = 1; //hardcoded, will wire to login later
     private boolean paused = false;
+    private Collectible[] collectibles;
+    private int collectedCount = 0;
+    private boolean allCollected = false;
+    private Label collectiblesLabel;
 
     public GameScreen(Main game) {
         this.game = game;
@@ -66,6 +70,13 @@ public class GameScreen implements Screen {
         // enemy init
         enemy = new Enemy(16, 256, 16, 496);
 
+        // collectibles init
+        collectibles = new Collectible[] {
+            new Collectible(752, 176), //COORD 1
+            new Collectible(112, 432), //COORD 2
+            new Collectible(464, 400)  //COORD 3
+        };
+
         //hud camera setup
         hudCamera = new OrthographicCamera();
         hudCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
@@ -77,6 +88,11 @@ public class GameScreen implements Screen {
         healthLabel.setPosition(20, Gdx.graphics.getHeight() -40);
         hudStage.addActor(healthLabel);
 
+        //collectibles hud
+        collectiblesLabel = new Label("Stones : 0/3", skin);
+        collectiblesLabel.setPosition(20, Gdx.graphics.getHeight() -70);
+        hudStage.addActor(collectiblesLabel);
+
         //pause hud
         Table pauseTable = new Table();
         pauseTable.setFillParent(true);
@@ -85,6 +101,7 @@ public class GameScreen implements Screen {
         pauseLabel.setVisible(false);
         pauseTable.add(pauseLabel);
         hudStage.addActor(pauseTable);
+
 
 
         recorder = new InputRecorder();
@@ -129,6 +146,21 @@ public class GameScreen implements Screen {
             enemy.takeDamage(1);
         }
 
+        //collectible pickup check
+        for (Collectible collectible : collectibles) {
+            if (!collectible.isCollected() &&
+            player.getBounds().overlaps(collectible.getBounds())) {
+                collectible.collect();
+                collectedCount++;
+                if (collectedCount >= 3) {
+                    allCollected = true;
+                }
+            }
+        }
+
+        //collectible HUD update
+        collectiblesLabel.setText("Stones: " + collectedCount + "/3");
+
         // death check
         if (player.isDead()) {
             game.setScreen(new GameOverScreen(game));
@@ -172,6 +204,14 @@ public class GameScreen implements Screen {
             batch.draw(enemy.getCurrentFrame(),
                 enemy.getX() - (Enemy.FRAME_WIDTH -32)/ 2f,
                 enemy.getY());
+        }
+
+        //draw uncollected collectibles
+        for (Collectible collectible : collectibles) {
+            if (!collectible.isCollected()) {
+                batch.draw(collectible.getTexture(),
+                    collectible.getX(), collectible.getY());
+            }
         }
 
         batch.end();
