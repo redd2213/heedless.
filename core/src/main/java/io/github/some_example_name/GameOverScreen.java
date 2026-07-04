@@ -63,7 +63,7 @@ public class GameOverScreen implements Screen {
         stage.draw();
         //alpha modifiers for fading effect (title and button)
         titleAlpha = Math.min(titleAlpha + delta * 0.2f, 1f);
-        if (titleAlpha >= 1f) {
+        if (titleAlpha >= 0.4f) {
             buttonAlpha = Math.min(buttonAlpha + delta * 0.5f, 1f);
         }
         titleLabel.setColor(1, 0, 0, titleAlpha);
