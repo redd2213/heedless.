@@ -209,9 +209,12 @@ public class GameScreen implements Screen {
 
         //draw uncollected collectibles
         for (Collectible collectible : collectibles) {
+            collectible.update(delta);
             if (!collectible.isCollected()) {
-                batch.draw(collectible.getTexture(),
-                    collectible.getX(), collectible.getY());
+                batch.draw(collectible.getCurrentFrame(),
+                    collectible.getX(), collectible.getY(),
+                    Collectible.SIZE, Collectible.SIZE // force render to 16x16
+                );
             }
         }
 

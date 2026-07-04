@@ -1,16 +1,20 @@
 package io.github.some_example_name;
 
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.utils.Array;
 
 public class Collectible {
     private float x;
     private float y;
     private boolean collected = false;
-    private Texture texture;
     private Rectangle bounds = new Rectangle();
+    private Animation<TextureRegion> energyStone;
+    private float stateTime = 0f;
+    private Texture spriteSheet;
 
     public static final int SIZE = 16;
 
@@ -18,14 +22,33 @@ public class Collectible {
         this.x = x;
         this.y =  y;
 
-        //placeholder yellow square that is to be replaced with a sprite later
-        Pixmap pixmap = new Pixmap(SIZE, SIZE, Pixmap.Format.RGBA8888);
-        pixmap.setColor(Color.YELLOW);
-        pixmap.fill();
-        texture = new Texture(pixmap);
-        pixmap.dispose();
+        //animation
+        energyStone = loadAnimation("Assets/SPRITES/Grotto-escape-2-FX/spritesheets/energy-shield.png", 8, 0.1f);
 
+        //bounds
         bounds.set(x, y, SIZE, SIZE);
+    }
+
+    public void update(float delta) {
+        if (!collected) {
+            stateTime += delta;
+        }
+    }
+
+    private Animation<TextureRegion> loadAnimation(String path, int cols, float frameDuration) {
+        spriteSheet = new Texture(Gdx.files.internal(path));
+        TextureRegion[][] tmp = TextureRegion.split(spriteSheet, spriteSheet.getWidth() / cols, spriteSheet.getHeight());
+        Array<TextureRegion> frames = new Array<>();
+        for (int i=0; i < cols; i++) {
+            frames.add(tmp[0][i]);
+        }
+        return new Animation<>(frameDuration, frames);
+    }
+
+    public TextureRegion getCurrentFrame() {
+        // simpler than in player because we have only one animation
+        TextureRegion frame = energyStone.getKeyFrame(stateTime, true);
+        return frame;
     }
 
     public boolean isCollected() {
@@ -40,14 +63,10 @@ public class Collectible {
         return bounds;
     }
 
-    public Texture getTexture() {
-        return texture;
-    }
-
     public float getX() { return x; }
     public float getY() { return y; }
 
     public void dispose() {
-        texture.dispose();
+        if (spriteSheet != null) spriteSheet.dispose();
     }
 }
