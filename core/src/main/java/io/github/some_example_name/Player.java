@@ -193,7 +193,7 @@ public class Player {
     }
 
     public void updateReplay(float delta, TiledMapTileLayer layer,
-                             boolean left, boolean right, boolean jump) {
+                             boolean left, boolean right, boolean jump, boolean attack) {
         isGrounded = false;
         float oldX = x;
 
@@ -219,10 +219,38 @@ public class Player {
 
         if (jump && isGrounded) velocityY = JUMP_VELOCITY;
 
-        if (!isGrounded && velocityY > 0) currentState = State.JUMP;
-        else if (!isGrounded && velocityY < 0) currentState = State.FALL;
-        else if (x != oldX) currentState = State.WALK;
-        else currentState = State.IDLE;
+        if (isAttacking) {
+            currentState = State.PUNCH;
+        } else if (!isGrounded && velocityY > 0) {
+            currentState = State.JUMP;
+        } else if (!isGrounded && velocityY < 0) {
+            currentState = State.FALL;
+        } else if (x != oldX) {
+            currentState = State.WALK;
+        } else {
+            currentState = State.IDLE;
+        }
+
+        if (attack && !isAttacking) {
+            isAttacking = true;
+            attackTimer = ATTACK_DURATION;
+            stateTime = 0f;
+            System.out.println("Attack triggered in replay at time: " + attackTimer);
+            System.out.println("currentState: " + currentState + " isAttacking: " + isAttacking);
+        }
+
+        if (isAttacking) {
+            attackTimer -= delta;
+            if (facingRight) {
+                attackHitbox.set(x + 32, y, ATTACK_RANGE, 32);
+            } else {
+                attackHitbox.set(x - ATTACK_RANGE, y, ATTACK_RANGE, 32);
+            }
+            if (attackTimer <= 0) {
+                isAttacking = false;
+                attackHitbox.set(0, 0, 0, 0);
+            }
+        }
     }
 
     public boolean isInvincible() {

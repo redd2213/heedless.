@@ -16,6 +16,7 @@ import com.badlogic.gdx.utils.ScreenUtils;
 public class ReplayScreen implements Screen {
     private Main game;
     private Player player;
+    private Enemy enemy;
     private SpriteBatch batch;
     private OrthographicCamera camera;
     private TiledMap map;
@@ -29,6 +30,7 @@ public class ReplayScreen implements Screen {
     private boolean leftPressed = false;
     private boolean rightPressed = false;
     private boolean jumpJustPressed = false;
+    private boolean attackJustPressed = false;
 
     public ReplayScreen(Main game, int userId) {
         this.game = game;
@@ -39,6 +41,7 @@ public class ReplayScreen implements Screen {
     public void show() {
         batch = new SpriteBatch();
         player = new Player();
+        enemy = new Enemy(16, 256, 16, 496);
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         map = new TmxMapLoader().load("map.tmx");
@@ -59,13 +62,18 @@ public class ReplayScreen implements Screen {
             if (record.keycode == Input.Keys.D) rightPressed = record.pressed;
             if (record.keycode == Input.Keys.A) leftPressed = record.pressed;
             if (record.keycode == Input.Keys.W && record.pressed) jumpJustPressed = true;
+            if (record.keycode == Input.Keys.SPACE && record.pressed) attackJustPressed = true;
 
             recordIndex++;
         }
 
         // drive player with recorded inputs
-        player.updateReplay(delta, layer, leftPressed, rightPressed, jumpJustPressed);
+        player.updateReplay(delta, layer, leftPressed, rightPressed, jumpJustPressed, attackJustPressed);
         jumpJustPressed = false;
+        attackJustPressed = false;
+
+        // enemy update
+        enemy.update(delta);
 
         // draw
         ScreenUtils.clear(Color.BLACK);
@@ -79,6 +87,9 @@ public class ReplayScreen implements Screen {
         batch.draw(player.getCurrentFrame(delta),
             player.getX() - (Player.FRAME_WIDTH - 32) / 2f,
             player.getY());
+        batch.draw(enemy.getCurrentFrame(),
+            enemy.getX() - (Enemy.FRAME_WIDTH - 32) / 2f,
+            enemy.getY());
         batch.end();
 
         // end replay when all records processed
@@ -107,5 +118,6 @@ public class ReplayScreen implements Screen {
         batch.dispose();
         map.dispose();
         mapRenderer.dispose();
+        // enemy doesn't have disposable assets for now
     }
 }
