@@ -44,14 +44,14 @@ public class LoginScreen implements Screen {
         //username field
         usernameField = new TextField("", skin);
         usernameField.setMessageText("Username");
-        table.add(usernameField).width(300).padBottom(10).row();
+        table.add(usernameField).width(500).padBottom(10).row();
 
         //password field
         passwordField = new TextField("", skin);
         passwordField.setMessageText("Password");
         passwordField.setPasswordMode(true);
         passwordField.setPasswordCharacter('*');
-        table.add(passwordField).width(300).padBottom(20).row();
+        table.add(passwordField).width(500).padBottom(20).row();
 
         //feedback label
         feedbackLabel = new Label("", skin);
@@ -59,7 +59,7 @@ public class LoginScreen implements Screen {
 
         //login button
         TextButton loginButton = new TextButton("Login", skin);
-        table.add(loginButton).width(200).padBottom(10).row();
+        table.add(loginButton).size(300, 100).padBottom(40).row();
         loginButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -81,7 +81,7 @@ public class LoginScreen implements Screen {
 
         //register button
         TextButton registerButton = new TextButton("Register", skin);
-        table.add(registerButton).width(200).row();
+        table.add(registerButton).size(300,100).row();
         registerButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {

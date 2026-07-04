@@ -45,7 +45,7 @@ public class WinScreen implements Screen {
         //return to menu button
         rtmButton = new TextButton("Return to menu", skin);
         rtmButton.getLabel().setFontScale(0.7f);
-        table.add(rtmButton).size(300, 100).padBottom(25).row();
+        table.add(rtmButton).size(300, 100).padBottom(40).row();
         rtmButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
