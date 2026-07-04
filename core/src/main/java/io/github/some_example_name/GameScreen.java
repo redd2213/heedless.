@@ -1,6 +1,8 @@
 package io.github.some_example_name;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -12,6 +14,7 @@ import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
@@ -28,7 +31,15 @@ public class GameScreen implements Screen {
     private OrthographicCamera hudCamera;
     private Stage hudStage;
     private Label healthLabel;
+    private Label pauseLabel;
     private Skin skin;
+    private InputRecorder recorder;
+    private int currentUserId = 1; //hardcoded, will wire to login later
+    private boolean paused = false;
+    private Collectible[] collectibles;
+    private int collectedCount = 0;
+    private boolean allCollected = false;
+    private Label collectiblesLabel;
 
     public GameScreen(Main game) {
         this.game = game;
@@ -48,8 +59,9 @@ public class GameScreen implements Screen {
         Gdx.input.setInputProcessor(null);
 
         // camera setup
+        float zoomFactor = 1.4f; // camera zoom because the pixel art is relatively small compared to global res
         camera = new OrthographicCamera();
-        camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        camera.setToOrtho(false, Gdx.graphics.getWidth() / zoomFactor, Gdx.graphics.getHeight() / zoomFactor);
 
         //map import and init
         map = new TmxMapLoader().load("map.tmx");
@@ -59,38 +71,119 @@ public class GameScreen implements Screen {
         // enemy init
         enemy = new Enemy(16, 256, 16, 496);
 
+        // collectibles init
+        collectibles = new Collectible[] {
+            new Collectible(752, 176), //COORD 1
+            new Collectible(112, 432), //COORD 2
+            new Collectible(464, 400)  //COORD 3
+        };
+
         //hud camera setup
         hudCamera = new OrthographicCamera();
         hudCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         //hud init
+        //health hud
         hudStage = new Stage(new ScreenViewport());
         healthLabel = new Label("HP: " + player.getCurrentHealth(), skin);
         healthLabel.setPosition(20, Gdx.graphics.getHeight() -40);
         hudStage.addActor(healthLabel);
+
+        //collectibles hud
+        collectiblesLabel = new Label("Stones : 0/3", skin);
+        collectiblesLabel.setPosition(20, Gdx.graphics.getHeight() -70);
+        hudStage.addActor(collectiblesLabel);
+
+        //pause hud
+        Table pauseTable = new Table();
+        pauseTable.setFillParent(true);
+        pauseTable.center();
+        pauseLabel = new Label("PAUSED", skin, "title");
+        pauseLabel.setVisible(false);
+        pauseTable.add(pauseLabel);
+        hudStage.addActor(pauseTable);
+
+
+
+        recorder = new InputRecorder();
+        Gdx.input.setInputProcessor(recorder);
+        recorder.startRecording();
     }
 
     @Override
     public void render(float delta) {
         // Draw your screen here. "delta" is the time since last render in seconds.
 
+        //pause toggle
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+            paused = !paused;
+            pauseLabel.setVisible(paused);
+        }
+
+        //skip logic and drawing updates when paused
+        if (paused) {
+            hudStage.act(delta);
+            hudStage.draw();
+            return;
+        }
+
         //WASD inputs
         player.update(delta, layer);
 
         //enemy
-        enemy.update(delta);
+        if (!enemy.isDead()) {
+            enemy.update(delta);
+        }
 
         // player hit by enemy
-        if(player.getBounds().overlaps(enemy.getBounds())) {
+        if(!enemy.isDead() && player.getBounds().overlaps(enemy.getBounds())) {
             float direction = player.getX() > enemy.getX() ? 1 : -1;
             player.applyKnockback(direction);
             player.takeDamage(1);
         }
 
+        //enemy hit by player
+        if (player.isAttacking() && player.getAttackHitbox().overlaps(enemy.getBounds())) {
+            enemy.takeDamage(1);
+        }
+
+        //collectible pickup check
+        for (Collectible collectible : collectibles) {
+            if (!collectible.isCollected() &&
+            player.getBounds().overlaps(collectible.getBounds())) {
+                collectible.collect();
+                collectedCount++;
+                if (collectedCount >= 3) {
+                    allCollected = true;
+                }
+            }
+        }
+
+        //collectible HUD update
+        collectiblesLabel.setText("Stones: " + collectedCount + "/3");
+
         // death check
         if (player.isDead()) {
             game.setScreen(new GameOverScreen(game));
         }
+
+        // win check (temp)
+        if (allCollected && enemy.isDead()) {
+            recorder.stopRecording();
+            for (InputRecord record : recorder.getRecords()) {
+                game.database.saveInputRecord(
+                    currentUserId,
+                    record.timestamp,
+                    record.keycode,
+                    record.pressed,
+                    recorder.getTimer()
+                );
+            }
+            game.setScreen(new WinScreen(game));
+        }
+
+        //recorder
+        recorder.update(delta);
 
         ScreenUtils.clear(Color.BLACK);
 
@@ -107,7 +200,23 @@ public class GameScreen implements Screen {
 
         //draw for player and enemy
         batch.draw(player.getCurrentFrame(delta), player.getX() - (Player.FRAME_WIDTH -32) /2f, player.getY());
-        batch.draw(enemy.getCurrentFrame(), enemy.getX() - (Enemy.FRAME_WIDTH -32) /2f, enemy.getY());
+
+        if (!enemy.isDead()) {
+            batch.draw(enemy.getCurrentFrame(),
+                enemy.getX() - (Enemy.FRAME_WIDTH -32)/ 2f,
+                enemy.getY());
+        }
+
+        //draw uncollected collectibles
+        for (Collectible collectible : collectibles) {
+            collectible.update(delta);
+            if (!collectible.isCollected()) {
+                batch.draw(collectible.getCurrentFrame(),
+                    collectible.getX(), collectible.getY(),
+                    Collectible.SIZE, Collectible.SIZE // force render to 16x16
+                );
+            }
+        }
 
         batch.end();
 
@@ -150,5 +259,8 @@ public class GameScreen implements Screen {
         mapRenderer.dispose();
         hudStage.dispose();
         skin.dispose();
+        for (Collectible collectible : collectibles) {
+            collectible.dispose();
+        }
     }
 }
