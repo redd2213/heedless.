@@ -167,7 +167,7 @@ public class GameScreen implements Screen {
         }
 
         // win check (temp)
-        if (enemy.isDead()) {
+        if (allCollected && enemy.isDead()) {
             recorder.stopRecording();
             for (InputRecord record : recorder.getRecords()) {
                 game.database.saveInputRecord(
@@ -255,5 +255,8 @@ public class GameScreen implements Screen {
         mapRenderer.dispose();
         hudStage.dispose();
         skin.dispose();
+        for (Collectible collectible : collectibles) {
+            collectible.dispose();
+        }
     }
 }
