@@ -17,7 +17,7 @@ public class Player {
     private float velocityX = 0f;
     private boolean isGrounded = false;
     private Rectangle bounds = new Rectangle();
-    private static final float GRAVITY = -500f;
+    private static final float GRAVITY = -900f;
     private static final float JUMP_VELOCITY = 430f;
     private float invincibilityTimer = 0f;
     private static final float INVINCIBILITY_DURATION = 0.0f; //switched to lower invincibility duration for damage testing purposes.
