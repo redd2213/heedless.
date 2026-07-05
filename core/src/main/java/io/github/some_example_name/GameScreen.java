@@ -3,6 +3,7 @@ package io.github.some_example_name;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -53,6 +54,7 @@ public class GameScreen implements Screen {
     private float girlStateTime = 0f;
     private static final float GIRL_X = 590f;
     private static final float GIRL_Y = 367f;
+    private Music music;
 
     public GameScreen(Main game) {
         this.game = game;
@@ -78,6 +80,15 @@ public class GameScreen implements Screen {
             girlFrames.add(girlTmp[0][i]);
         }
         girlAnim = new Animation<>(0.1f, girlFrames);
+
+        //music init
+        music = Gdx.audio.newMusic(Gdx.files.internal("Assets/Music (Crimson Hollow by Andy Martinez on itch.io)/Dungeon(GameScreen).wav"));
+        music.setLooping(true);
+        music.setVolume(0.5f);
+        music.play();
+        if (game.menuMusic != null && game.menuMusic.isPlaying()) {
+            game.menuMusic.stop();
+        }
 
         //fixes working buttons even after screen swap
         Gdx.input.setInputProcessor(null);
@@ -323,6 +334,8 @@ public class GameScreen implements Screen {
     @Override
     public void hide() {
         // This method is called when another screen replaces this one.
+        music.stop();
+        music.dispose();
     }
 
     @Override
@@ -337,5 +350,9 @@ public class GameScreen implements Screen {
             collectible.dispose();
         }
         if (attackTexture != null) attackTexture.dispose();
+        if (music != null) {
+            music.stop();
+            music.dispose();
+        }
     }
 }

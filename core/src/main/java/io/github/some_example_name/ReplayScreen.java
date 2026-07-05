@@ -2,9 +2,13 @@ package io.github.some_example_name;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
@@ -21,19 +25,27 @@ public class ReplayScreen implements Screen {
     private Player player;
     private Enemy enemy;
     private Collectible[] collectibles;
+    private Portal portal;
     private SpriteBatch batch;
     private OrthographicCamera camera;
     private TiledMap map;
     private OrthogonalTiledMapRenderer mapRenderer;
     private TiledMapTileLayer layer;
+    private Music music;
 
-    // HUD
+    //girl animation
+    private Animation<TextureRegion> girlAnim;
+    private float girlStateTime = 0f;
+    private static final float GIRL_X = 590f;
+    private static final float GIRL_Y = 367f;
+
+    //hud
     private Stage hudStage;
     private Skin skin;
     private Label healthLabel;
     private Label collectiblesLabel;
 
-    // Replay data
+    //replay data
     private Array<FrameState> frames;
     private int frameIndex = 0;
 
@@ -46,47 +58,71 @@ public class ReplayScreen implements Screen {
     public void show() {
         batch = new SpriteBatch();
 
-        // Player starts at default position — state will be restored from frame 0
+        //player
         player = new Player();
 
-        // Enemy same patrol as GameScreen
+        //enemy
         enemy = new Enemy(16, 256, 16, 496);
 
-        // Collectibles - Using the exact Tiled coordinates we fixed earlier!
+        //collectibles
         collectibles = new Collectible[] {
-            new Collectible(752, 176),
-            new Collectible(112, 432),
-            new Collectible(464, 400)
+            new Collectible(745, 176),
+            new Collectible(105, 432),
+            new Collectible(460, 400)
         };
 
-        // Camera - Including the Zoom fix!
-        camera = new OrthographicCamera();
-        float zoomFactor = 2f;
-        camera.setToOrtho(false, Gdx.graphics.getWidth() / zoomFactor, Gdx.graphics.getHeight() / zoomFactor);
+        //portal
+        portal = new Portal(656, 360);
 
-        // Map
+        //girl animation
+        Texture girlSheet = new Texture(Gdx.files.internal(
+            "Assets/SPRITES/Dancing Girl Files/spritesheets/snap.png"));
+        TextureRegion[][] girlTmp = TextureRegion.split(girlSheet,
+            girlSheet.getWidth() / 8, girlSheet.getHeight());
+        Array<TextureRegion> girlFrames = new Array<>();
+        for (int i = 0; i < 8; i++) {
+            girlFrames.add(girlTmp[0][i]);
+        }
+        girlAnim = new Animation<>(0.1f, girlFrames);
+
+        //camera
+        float zoomFactor = 1.4f;
+        camera = new OrthographicCamera();
+        camera.setToOrtho(false,
+            Gdx.graphics.getWidth() / zoomFactor,
+            Gdx.graphics.getHeight() / zoomFactor);
+
+        //map
         map = new TmxMapLoader().load("map.tmx");
         mapRenderer = new OrthogonalTiledMapRenderer(map);
         layer = (TiledMapTileLayer) map.getLayers().get("Tile Layer 1");
 
-        // HUD
+        //hud
         skin = new Skin(Gdx.files.internal("pixthulhu/pixthulhu-ui.json"));
         hudStage = new Stage(new ScreenViewport());
 
-        healthLabel = new Label("HP: 5/5", skin);
-        healthLabel.setPosition(20, Gdx.graphics.getHeight() - 40);
+        healthLabel = new Label("HP: 5/ 5", skin, "title");
+        healthLabel.setFontScale(0.5f);
+        healthLabel.setPosition(20, Gdx.graphics.getHeight() - 100);
         hudStage.addActor(healthLabel);
 
-        collectiblesLabel = new Label("Stones: 0/3", skin);
-        collectiblesLabel.setPosition(20, Gdx.graphics.getHeight() - 70);
+        collectiblesLabel = new Label("Stones: 0/3", skin, "title");
+        collectiblesLabel.setFontScale(0.5f);
+        collectiblesLabel.setPosition(20, Gdx.graphics.getHeight() - 160);
         hudStage.addActor(collectiblesLabel);
+
+        //music setup
+        music = Gdx.audio.newMusic(Gdx.files.internal("Assets/Music (Crimson Hollow by Andy Martinez on itch.io)/Dungeon(GameScreen).wav"));
+        music.setLooping(true);
+        music.setVolume(0.5f);
+        music.play();
 
         Gdx.input.setInputProcessor(null);
     }
 
     @Override
     public void render(float delta) {
-        // End of replay — go back to menu
+        //going back to menu
         if (frameIndex >= frames.size) {
             game.setScreen(new MenuScreen(game));
             return;
@@ -95,24 +131,32 @@ public class ReplayScreen implements Screen {
         FrameState fs = frames.get(frameIndex);
         frameIndex++;
 
-        // === RESTORE STATE DIRECTLY — NO PHYSICS SIMULATION ===
+        //state restore
         player.restoreState(fs);
 
         if (!fs.enemyDead) {
             enemy.restoreState(fs);
         }
 
-        // Restore collectibles based on the frame data
+        //restore collectibles
         int collectedCount = 0;
         if (fs.stone0) collectibles[0].collect();
         if (fs.stone1) collectibles[1].collect();
         if (fs.stone2) collectibles[2].collect();
-
         if (collectibles[0].isCollected()) collectedCount++;
         if (collectibles[1].isCollected()) collectedCount++;
         if (collectibles[2].isCollected()) collectedCount++;
 
-        // === DRAW ===
+        //restore portal
+        if (fs.stone0 && fs.stone1 && fs.stone2 && fs.enemyDead) {
+            if (!portal.isActive()) portal.activate();
+        }
+        portal.update(fs.delta);
+
+        //advance girl anim
+        girlStateTime += fs.delta;
+
+        //draw
         ScreenUtils.clear(Color.BLACK);
         camera.position.set(player.getX(), player.getY(), 0);
         camera.update();
@@ -122,20 +166,29 @@ public class ReplayScreen implements Screen {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
-        // Draw uncollected collectibles (Updated for animations!)
+        //draw uncollected collectibles
         for (Collectible c : collectibles) {
             if (!c.isCollected()) {
-                c.update(fs.delta); // Progress the animation timer
-                batch.draw(c.getCurrentFrame(), c.getX(), c.getY(), Collectible.SIZE, Collectible.SIZE);
+                c.update(fs.delta);
+                batch.draw(c.getCurrentFrame(),
+                    c.getX(), c.getY(),
+                    Collectible.SIZE, Collectible.SIZE);
             }
         }
 
-        // Draw player using recorded animation state
+        //draw portal
+        portal.draw(batch, fs.delta);
+
+        //draw girl
+        TextureRegion girlFrame = girlAnim.getKeyFrame(girlStateTime, true);
+        batch.draw(girlFrame, GIRL_X, GIRL_Y, 39 * 0.95f, 53 * 0.95f);
+
+        //draw player
         batch.draw(player.getCurrentFrameForReplay(),
             player.getX() - (Player.FRAME_WIDTH - 32) / 2f,
             player.getY());
 
-        // Draw enemy only if alive in this frame
+        //draw enemy if alive
         if (!fs.enemyDead) {
             enemy.advanceAnimation(fs.delta);
             batch.draw(enemy.getCurrentFrame(),
@@ -145,9 +198,9 @@ public class ReplayScreen implements Screen {
 
         batch.end();
 
-        // HUD Updates
-        healthLabel.setText("HP: " + fs.playerHealth + " / 5");
-        collectiblesLabel.setText("Stones: " + collectedCount + " / 3");
+        //hud
+        healthLabel.setText("HP: " + fs.playerHealth + "/ 5");
+        collectiblesLabel.setText("Stones: " + collectedCount + "/3");
         hudStage.act(fs.delta);
         hudStage.draw();
     }
@@ -155,15 +208,19 @@ public class ReplayScreen implements Screen {
     @Override
     public void resize(int width, int height) {
         if (width <= 0 || height <= 0) return;
-        // Keep zoom consistent on resize
-        float zoomFactor = 2f;
+        float zoomFactor = 1.4f;
         camera.setToOrtho(false, width / zoomFactor, height / zoomFactor);
         hudStage.getViewport().update(width, height, true);
     }
 
     @Override public void pause() {}
+
     @Override public void resume() {}
-    @Override public void hide() {}
+
+    @Override public void hide() {
+        music.stop();
+        music.dispose();
+    }
 
     @Override
     public void dispose() {
@@ -173,5 +230,9 @@ public class ReplayScreen implements Screen {
         hudStage.dispose();
         skin.dispose();
         for (Collectible c : collectibles) c.dispose();
+        if (music != null) {
+            music.stop();
+            music.dispose();
+        }
     }
 }

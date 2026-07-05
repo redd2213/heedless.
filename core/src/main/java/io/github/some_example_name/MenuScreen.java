@@ -2,6 +2,7 @@ package io.github.some_example_name;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -15,6 +16,7 @@ public class MenuScreen implements Screen {
     private Stage stage; //declared the Stage field.
     private Skin skin;
     private Main game;
+    private Music music;
 
     public MenuScreen(Main game) {
         this.game = game;
@@ -56,6 +58,11 @@ public class MenuScreen implements Screen {
             }
         });
 
+        //music setup
+        if (game.menuMusic != null && !game.menuMusic.isPlaying()) {
+            game.menuMusic.play();
+        }
+
         Gdx.input.setInputProcessor(stage);
 
     }
@@ -91,6 +98,7 @@ public class MenuScreen implements Screen {
     @Override
     public void hide() {
         // This method is called when another screen replaces this one.
+
     }
 
     @Override
@@ -98,5 +106,7 @@ public class MenuScreen implements Screen {
         // Destroy screen's assets here.
         stage.dispose();
         skin.dispose();
+        music.stop();
+        music.dispose();
     }
 }

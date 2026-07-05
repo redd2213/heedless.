@@ -2,6 +2,7 @@ package io.github.some_example_name;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -22,6 +23,7 @@ public class GameOverScreen implements Screen {
     private float buttonAlpha = 0f;
     private Label titleLabel;
     private TextButton rtmButton;
+    private Music music;
 
     public GameOverScreen(Main game) {
         this.game = game;
@@ -51,6 +53,12 @@ public class GameOverScreen implements Screen {
                 game.setScreen(new MenuScreen(game));
             }
         });
+
+        //music setup
+        music = Gdx.audio.newMusic(Gdx.files.internal("Assets/Music (Crimson Hollow by Andy Martinez on itch.io)/Point of return(GameOverScreen).wav"));
+        music.setLooping(true);
+        music.setVolume(0.5f);
+        music.play();
 
         Gdx.input.setInputProcessor(stage);
     }
@@ -93,6 +101,8 @@ public class GameOverScreen implements Screen {
     @Override
     public void hide() {
         // This method is called when another screen replaces this one.
+        music.stop();
+        music.dispose();
     }
 
     @Override
@@ -100,5 +110,9 @@ public class GameOverScreen implements Screen {
         // Destroy screen's assets here.
         stage.dispose();
         skin.dispose();
+        if (music != null) {
+            music.stop();
+            music.dispose();
+        }
     }
 }
