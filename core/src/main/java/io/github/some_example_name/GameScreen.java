@@ -73,9 +73,10 @@ public class GameScreen implements Screen {
 
         // collectibles init
         collectibles = new Collectible[] {
-            new Collectible(752, 176), //COORD 1
-            new Collectible(112, 432), //COORD 2
-            new Collectible(464, 400)  //COORD 3
+            //had to improvise inital coordinates because of sprite size change from 16x16 to 32x32
+            new Collectible(745, 176), //COORD 1
+            new Collectible(105, 432), //COORD 2
+            new Collectible(460, 400)  //COORD 3
         };
 
         //hud camera setup

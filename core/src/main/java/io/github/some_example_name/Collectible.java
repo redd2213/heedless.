@@ -16,7 +16,7 @@ public class Collectible {
     private float stateTime = 0f;
     private Texture spriteSheet;
 
-    public static final int SIZE = 16;
+    public static final int SIZE = 32;
 
     public Collectible(float x, float y) {
         this.x = x;

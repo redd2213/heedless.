@@ -40,7 +40,7 @@ public class WinScreen implements Screen {
 
         //title label
         titleLabel = new Label("RUN COMPLETED.", skin, "title");
-        table.add(titleLabel).padBottom(150).row();
+        table.add(titleLabel).padBottom(50).row();
 
         //return to menu button
         rtmButton = new TextButton("Return to menu", skin);
@@ -78,7 +78,7 @@ public class WinScreen implements Screen {
         if (titleAlpha >= 0.4f) {
             buttonAlpha = Math.min(buttonAlpha + delta * 0.5f, 1f);
         }
-        titleLabel.setColor(0, 1, 1, titleAlpha);
+        titleLabel.setColor(1, 1, 1, titleAlpha);
         rtmButton.setColor(1, 1, 1, buttonAlpha);
         replayButton.setColor(1, 1, 1, buttonAlpha);
     }

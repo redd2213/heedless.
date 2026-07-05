@@ -32,12 +32,12 @@ public class MenuScreen implements Screen {
         stage.addActor(table);
 
         //title label
-        Label titleLabel = new Label("metroidvania-game", skin, "title");
-        table.add(titleLabel).padBottom(30).row();
+        Label titleLabel = new Label("Heedless.", skin, "title");
+        table.add(titleLabel).padBottom(50).row();
 
         //play button
         TextButton playButton = new TextButton("Play", skin);
-        table.add(playButton).size(300, 100).padBottom(40).row();
+        table.add(playButton).size(250, 100).padBottom(40).row();
         playButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -48,7 +48,7 @@ public class MenuScreen implements Screen {
 
         //quit button
         TextButton quitButton = new TextButton("Quit", skin);
-        table.add(quitButton).size(300, 100).row();
+        table.add(quitButton).size(250, 100).row();
         quitButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {

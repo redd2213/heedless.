@@ -91,8 +91,8 @@ public class CutsceneScreen implements Screen {
         //text display
         hudStage = new Stage(new ScreenViewport());
         skin = new Skin(Gdx.files.internal("pixthulhu/pixthulhu-ui.json"));
-        textLabel = new Label("HELP ME !!!", skin, "title");
-        textLabel.setFontScale(0.4f);
+        textLabel = new Label("HELP ME !!!", skin);
+        textLabel.setFontScale(1.3f);
         hudStage.addActor(textLabel);
 
         //skip button overlay
