@@ -2,10 +2,10 @@ package io.github.some_example_name;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
@@ -17,6 +17,9 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.actions.Actions;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 
 /** First screen of the application. Displayed after the application is created. */
 public class GameScreen implements Screen {
@@ -32,6 +35,7 @@ public class GameScreen implements Screen {
     private Stage hudStage;
     private Label healthLabel;
     private Label pauseLabel;
+    private Label objectiveLabel;
     private Skin skin;
     private FrameRecorder recorder;
     private int currentUserId; //hardcoded, will wire to login later (forgot about this and debugged the replay system for 30 minutes :D )
@@ -40,6 +44,8 @@ public class GameScreen implements Screen {
     private int collectedCount = 0;
     private boolean allCollected = false;
     private Label collectiblesLabel;
+    private Texture attackTexture;
+    private Label attackLabel;
 
     public GameScreen(Main game) {
         this.game = game;
@@ -86,14 +92,43 @@ public class GameScreen implements Screen {
         //hud init
         //health hud
         hudStage = new Stage(new ScreenViewport());
-        healthLabel = new Label("HP: " + player.getCurrentHealth(), skin);
-        healthLabel.setPosition(20, Gdx.graphics.getHeight() -40);
+        healthLabel = new Label("HP: " + player.getCurrentHealth(), skin, "title");
+        healthLabel.setFontScale(0.5f);
+        healthLabel.setPosition(20, Gdx.graphics.getHeight() -100);
         hudStage.addActor(healthLabel);
 
         //collectibles hud
-        collectiblesLabel = new Label("Stones : 0/3", skin);
-        collectiblesLabel.setPosition(20, Gdx.graphics.getHeight() -70);
+        collectiblesLabel = new Label("Stones : 0/3", skin, "title");
+        collectiblesLabel.setFontScale(0.5f);
+        collectiblesLabel.setPosition(20, Gdx.graphics.getHeight() -160);
         hudStage.addActor(collectiblesLabel);
+
+        //objective hud
+        objectiveLabel = new Label("Objective: Collect all the Energy Stones and slay all the monsters to unlock the Portal to the next room!", skin);
+        objectiveLabel.setFontScale(1f);
+        objectiveLabel.setPosition(300, Gdx.graphics.getHeight() -1050);
+        hudStage.addActor(objectiveLabel);
+
+        //tutorial hud
+        Texture attackTexture = new Texture(Gdx.files.internal("Assets/SPRITES/player/Punch/sprites/f-02.png"));
+        Image attackImage = new Image(attackTexture);
+
+        Table tutorialTable = new Table();
+        tutorialTable.setFillParent(true);
+        tutorialTable.bottom().padBottom(150);
+        tutorialTable.add(attackImage).size(attackTexture.getWidth() * 2f, attackTexture.getHeight() * 2f);
+        Label attackLabel = new Label("= SPACE", skin);
+        tutorialTable.add(attackLabel).padLeft(10).padTop(50);
+        tutorialTable.getColor().a = 0f;
+
+        tutorialTable.addAction(Actions.sequence(
+            Actions.fadeIn(1f),     //1 second to fade in
+            Actions.delay(4f),      //wait on screen for 4 seconds
+            Actions.fadeOut(1f),    //1 second to fade out
+            Actions.removeActor()
+        ));
+
+        hudStage.addActor(tutorialTable);
 
         //pause hud
         Table pauseTable = new Table();
@@ -264,5 +299,6 @@ public class GameScreen implements Screen {
         for (Collectible collectible : collectibles) {
             collectible.dispose();
         }
+        if (attackTexture != null) attackTexture.dispose();
     }
 }
