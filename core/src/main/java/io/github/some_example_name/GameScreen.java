@@ -6,7 +6,9 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
@@ -15,11 +17,11 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 
 /** First screen of the application. Displayed after the application is created. */
 public class GameScreen implements Screen {
@@ -47,6 +49,10 @@ public class GameScreen implements Screen {
     private Texture attackTexture;
     private Label attackLabel;
     private Portal portal;
+    private Animation<TextureRegion> girlAnim;
+    private float girlStateTime = 0f;
+    private static final float GIRL_X = 590f;
+    private static final float GIRL_Y = 367f;
 
     public GameScreen(Main game) {
         this.game = game;
@@ -61,6 +67,17 @@ public class GameScreen implements Screen {
         //player init
         batch = new SpriteBatch();
         player = new Player();
+
+        //girl init
+        Texture girlSheet = new Texture(Gdx.files.internal(
+            "Assets/SPRITES/Dancing Girl Files/spritesheets/snap.png"));
+        TextureRegion[][] girlTmp = TextureRegion.split(girlSheet,
+            girlSheet.getWidth() / 8, girlSheet.getHeight());
+        Array<TextureRegion> girlFrames = new Array<>();
+        for (int i = 0; i < 8; i++) {
+            girlFrames.add(girlTmp[0][i]);
+        }
+        girlAnim = new Animation<>(0.1f, girlFrames);
 
         //fixes working buttons even after screen swap
         Gdx.input.setInputProcessor(null);
@@ -210,6 +227,9 @@ public class GameScreen implements Screen {
         //collectible HUD update
         collectiblesLabel.setText("Stones: " + collectedCount + "/3");
 
+        //girl update
+        girlStateTime += delta;
+
         // death check
         if (player.isDead()) {
             game.setScreen(new GameOverScreen(game));
@@ -266,6 +286,10 @@ public class GameScreen implements Screen {
 
         //draw portal
         portal.draw(batch, delta);
+
+        //draw girl
+        TextureRegion girlFrame = girlAnim.getKeyFrame(girlStateTime, true);
+        batch.draw(girlFrame, GIRL_X, GIRL_Y, 39 * 0.95f, 53 * 0.95f);
 
         batch.end();
 
