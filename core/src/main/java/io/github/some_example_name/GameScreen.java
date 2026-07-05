@@ -46,6 +46,7 @@ public class GameScreen implements Screen {
     private Label collectiblesLabel;
     private Texture attackTexture;
     private Label attackLabel;
+    private Portal portal;
 
     public GameScreen(Main game) {
         this.game = game;
@@ -84,6 +85,9 @@ public class GameScreen implements Screen {
             new Collectible(105, 432), //COORD 2
             new Collectible(460, 400)  //COORD 3
         };
+
+        //portal init
+        portal = new Portal(656,360);
 
         //hud camera setup
         hudCamera = new OrthographicCamera();
@@ -211,8 +215,14 @@ public class GameScreen implements Screen {
             game.setScreen(new GameOverScreen(game));
         }
 
-        // win check (temp)
-        if (allCollected && enemy.isDead()) {
+        //objective check
+        if (allCollected && enemy.isDead() && !portal.isActive()) {
+            portal.activate();
+        }
+        portal.update(delta);
+
+        // win check
+        if (portal.isActive() && player.getBounds().overlaps(portal.getBounds())) {
             recorder.stopRecording();
             game.database.saveReplay(currentUserId, recorder.getFrames());
             game.setScreen(new WinScreen(game));
@@ -253,6 +263,9 @@ public class GameScreen implements Screen {
                 );
             }
         }
+
+        //draw portal
+        portal.draw(batch, delta);
 
         batch.end();
 
