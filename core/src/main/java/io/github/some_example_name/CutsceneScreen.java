@@ -111,7 +111,7 @@ public class CutsceneScreen implements Screen {
         } else {
             pauseTimer += delta;
             if (pauseTimer >= 2f) {
-                game.setScreen(new GameScreen(game));
+                game.setScreen(new StoryScreen(game));
                 return;
             }
         }
@@ -136,12 +136,12 @@ public class CutsceneScreen implements Screen {
             girlX, girlY,
             GIRL_WIDTH, GIRL_HEIGHT);
 
+        batch.end();
+
         //draw text following girl
         textLabel.setPosition(girlX, girlY + GIRL_HEIGHT);
         hudStage.act(delta);
         hudStage.draw();
-
-        batch.end();
     }
 
     @Override
