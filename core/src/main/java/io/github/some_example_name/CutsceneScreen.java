@@ -14,6 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 public class CutsceneScreen implements Screen {
     private Main game;
@@ -51,6 +52,9 @@ public class CutsceneScreen implements Screen {
     private Label textLabel;
     private Stage hudStage;
     private Skin skin;
+    private Label skipLabel;
+    private float blinkTimer = 0f;
+    private boolean blinkVisible = true;
 
     public CutsceneScreen(Main game) {
         this.game = game;
@@ -85,11 +89,16 @@ public class CutsceneScreen implements Screen {
         wolfY = floorY;
 
         //text display
-        hudStage = new Stage();
+        hudStage = new Stage(new ScreenViewport());
         skin = new Skin(Gdx.files.internal("pixthulhu/pixthulhu-ui.json"));
         textLabel = new Label("HELP ME !!!", skin, "title");
         textLabel.setFontScale(0.4f);
         hudStage.addActor(textLabel);
+
+        //skip button overlay
+        skipLabel = new Label("Press ESC to skip", skin);
+        skipLabel.setFontScale(0.8f);
+        hudStage.addActor(skipLabel);
 
         Gdx.input.setInputProcessor(null);
     }
@@ -145,6 +154,16 @@ public class CutsceneScreen implements Screen {
 
         batch.end();
 
+        //blinking logic for the skip button
+        blinkTimer += delta;
+        if (blinkTimer >= 0.6f) {
+            blinkVisible = !blinkVisible;
+            blinkTimer = 0f;
+        }
+
+        //opacity settings for skip button
+        skipLabel.setColor(1,1,1, blinkVisible ? 0.6f : 0f);
+
         //draw text following girl
         textLabel.setPosition(girlX, girlY + GIRL_HEIGHT);
         hudStage.act(delta);
@@ -152,7 +171,14 @@ public class CutsceneScreen implements Screen {
     }
 
     @Override
-    public void resize(int width, int height) {}
+    public void resize(int width, int height) {
+        if (width <= 0 || height <= 0) return;
+        if (hudStage != null) {
+            hudStage.getViewport().update(width, height, true);
+            float actualTextWidth = skipLabel.getPrefWidth() * skipLabel.getFontScaleX();
+            skipLabel.setPosition(width - actualTextWidth - 50, 20);
+        }
+    }
 
     @Override
     public void pause() {}
