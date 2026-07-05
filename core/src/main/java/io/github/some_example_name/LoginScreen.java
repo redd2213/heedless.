@@ -71,7 +71,9 @@ public class LoginScreen implements Screen {
                     return;
                 }
 
-                if (game.database.loginUser(username, password)) {
+                int userId = game.database.loginUser(username, password);
+                if (userId != -1) {
+                    game.currentUserId = userId; // store the real user ID
                     game.setScreen(new MenuScreen(game));
                 } else {
                     feedbackLabel.setText("Invalid username or password.");
@@ -133,8 +135,6 @@ public class LoginScreen implements Screen {
     @Override
     public void hide() {
         // This method is called when another screen replaces this one.
-        stage.dispose();
-        skin.dispose();
     }
 
     @Override

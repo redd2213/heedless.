@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
+import org.w3c.dom.Text;
 
 public class Player {
     private float x = 100;
@@ -192,65 +193,38 @@ public class Player {
         velocityY = 100f;
     }
 
-    public void updateReplay(float delta, TiledMapTileLayer layer,
-                             boolean left, boolean right, boolean jump, boolean attack) {
-        isGrounded = false;
-        float oldX = x;
+    //state restoration
+    public void restoreState(FrameState fs) {
+        this.x = fs.playerX;
+        this.y = fs.playerY;
+        this.velocityY = fs.velocityY;
+        this.velocityX = fs.velocityX;
+        this.isGrounded = fs.isGrounded;
+        this.currentState = fs.animState;
+        this.facingRight = fs.facingRight;
+        this.stateTime = fs.stateTime;
+        this.currentHealth = fs.playerHealth;
+        this.bounds.setPosition(x, y);
+    }
 
-        if (right) { x += speed * delta; facingRight = true; }
-        if (left)  { x -= speed * delta; facingRight = false; }
-
-        bounds.setPosition(x, y);
-        if (isColliding(layer)) {
-            x = oldX;
-            bounds.setPosition(x, y);
+    //replay frame getter (no delta advance, uses stateTime)
+    public TextureRegion getCurrentFrameForReplay() {
+        Animation<TextureRegion> anim;
+        switch (currentState) {
+            case WALK: anim = walkAnim; break;
+            case JUMP: anim = jumpAnim; break;
+            case FALL: anim = fallAnim; break;
+            case PUNCH: anim = punchAnim; break;
+            default: anim = idleAnim; break;
         }
 
-        velocityY += GRAVITY * delta;
-        float oldY = y;
-        y += velocityY * delta;
-        bounds.setPosition(x, y);
+        //use recorded stateTime
+        boolean loop = currentState != State.PUNCH;
+        TextureRegion frame = anim.getKeyFrame(stateTime, loop);
 
-        if (isColliding(layer)) {
-            if (velocityY < 0) isGrounded = true;
-            y = oldY;
-            velocityY = 0;
-        }
-
-        if (jump && isGrounded) velocityY = JUMP_VELOCITY;
-
-        if (isAttacking) {
-            currentState = State.PUNCH;
-        } else if (!isGrounded && velocityY > 0) {
-            currentState = State.JUMP;
-        } else if (!isGrounded && velocityY < 0) {
-            currentState = State.FALL;
-        } else if (x != oldX) {
-            currentState = State.WALK;
-        } else {
-            currentState = State.IDLE;
-        }
-
-        if (attack && !isAttacking) {
-            isAttacking = true;
-            attackTimer = ATTACK_DURATION;
-            stateTime = 0f;
-            System.out.println("Attack triggered in replay at time: " + attackTimer);
-            System.out.println("currentState: " + currentState + " isAttacking: " + isAttacking);
-        }
-
-        if (isAttacking) {
-            attackTimer -= delta;
-            if (facingRight) {
-                attackHitbox.set(x + 32, y, ATTACK_RANGE, 32);
-            } else {
-                attackHitbox.set(x - ATTACK_RANGE, y, ATTACK_RANGE, 32);
-            }
-            if (attackTimer <= 0) {
-                isAttacking = false;
-                attackHitbox.set(0, 0, 0, 0);
-            }
-        }
+        if (facingRight && frame.isFlipX()) frame.flip(true, false);
+        else if (!facingRight && !frame.isFlipX()) frame.flip(true, false);
+        return frame;
     }
 
     public boolean isInvincible() {
@@ -279,6 +253,22 @@ public class Player {
 
     public float getVelocityY() {
         return velocityY;
+    }
+
+    public float getVelocityX() {
+        return velocityX;
+    }
+
+    public Player.State getCurrentState() {
+        return currentState;
+    }
+
+    public boolean isFacingRight() {
+        return facingRight;
+    }
+
+    public float getStateTime() {
+        return stateTime;
     }
 
     public boolean isGrounded() {

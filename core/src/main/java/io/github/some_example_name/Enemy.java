@@ -86,6 +86,18 @@ public class Enemy {
         return frame;
     }
 
+    public void restoreState(FrameState fs) {
+        this.x = fs.enemyX;
+        this.isDead = fs.enemyDead;
+        this.currentHealth = fs.enemyHealth;
+        this.bounds.setPosition(x, y);
+    }
+
+    //advances the animation timer only, used during replay
+    public void advanceAnimation(float delta) {
+        stateTime += delta;
+    }
+
     public void takeDamage(int amount) {
         if (invincibilityTimer <= 0) {
             currentHealth -= amount;

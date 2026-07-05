@@ -33,8 +33,8 @@ public class GameScreen implements Screen {
     private Label healthLabel;
     private Label pauseLabel;
     private Skin skin;
-    private InputRecorder recorder;
-    private int currentUserId = 1; //hardcoded, will wire to login later
+    private FrameRecorder recorder;
+    private int currentUserId; //hardcoded, will wire to login later (forgot about this and debugged the replay system for 30 minutes :D )
     private boolean paused = false;
     private Collectible[] collectibles;
     private int collectedCount = 0;
@@ -105,14 +105,22 @@ public class GameScreen implements Screen {
 
 
 
-        recorder = new InputRecorder();
-        Gdx.input.setInputProcessor(recorder);
+        currentUserId = game.currentUserId;
+        recorder = new FrameRecorder();
         recorder.startRecording();
     }
 
     @Override
     public void render(float delta) {
         // Draw your screen here. "delta" is the time since last render in seconds.
+
+        //detect single-frame events before updating player
+        if (Gdx.input.isKeyJustPressed(Input.Keys.W) && player.isGrounded()) {
+            recorder.onJumpPressed();
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && !player.isAttacking()) {
+            recorder.onAttackPressed();
+        }
 
         //pause toggle
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
@@ -170,20 +178,12 @@ public class GameScreen implements Screen {
         // win check (temp)
         if (allCollected && enemy.isDead()) {
             recorder.stopRecording();
-            for (InputRecord record : recorder.getRecords()) {
-                game.database.saveInputRecord(
-                    currentUserId,
-                    record.timestamp,
-                    record.keycode,
-                    record.pressed,
-                    recorder.getTimer()
-                );
-            }
+            game.database.saveReplay(currentUserId, recorder.getFrames());
             game.setScreen(new WinScreen(game));
         }
 
-        //recorder
-        recorder.update(delta);
+        //record complete frame state after update
+        recorder.recordFrame(delta, player, enemy, collectibles);
 
         ScreenUtils.clear(Color.BLACK);
 
@@ -232,6 +232,7 @@ public class GameScreen implements Screen {
         // If the window is minimized on a desktop (LWJGL3) platform, width and height are 0, which causes problems.
         // In that case, we don't resize anything, and wait for the window to be a normal size before updating.
         if(width <= 0 || height <= 0) return;
+
 
         // Resize your screen here. The parameters represent the new window size.
     }

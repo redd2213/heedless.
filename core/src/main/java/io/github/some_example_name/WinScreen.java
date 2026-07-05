@@ -60,7 +60,7 @@ public class WinScreen implements Screen {
         replayButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                game.setScreen(new ReplayScreen(game, 1)); // the hardcoded userId
+                game.setScreen(new ReplayScreen(game, game.currentUserId));
             }
         });
 
