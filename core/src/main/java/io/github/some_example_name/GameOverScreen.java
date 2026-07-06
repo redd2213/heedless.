@@ -2,6 +2,7 @@ package io.github.some_example_name;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -13,7 +14,11 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
-/** First screen of the application. Displayed after the application is created. */
+/**
+ * Displays the Game Over screen when the player's health reaches zero.
+ * Features a Dark Souls inspired "YOU DIED." title that fades in slowly,
+ * followed by a "Return to Menu" button. Plays a dedicated music track.
+ */
 public class GameOverScreen implements Screen {
     private Main game;
     private Stage stage;
@@ -22,13 +27,23 @@ public class GameOverScreen implements Screen {
     private float buttonAlpha = 0f;
     private Label titleLabel;
     private TextButton rtmButton;
+    private Music music;
 
+    /**
+     * Creates a new GameOverScreen.
+     *
+     * @param game the main game instance used for screen navigation
+     */
     public GameOverScreen(Main game) {
         this.game = game;
     }
+
+    /**
+     * Initializes the Game Over UI with a title label and return to menu button.
+     * Starts the game over music track.
+     */
     @Override
     public void show() {
-        // Prepare your screen here.
         stage = new Stage(new ScreenViewport());
         skin = new Skin(Gdx.files.internal("pixthulhu/pixthulhu-ui.json"));
 
@@ -37,11 +52,11 @@ public class GameOverScreen implements Screen {
         table.center();
         stage.addActor(table);
 
-        //title label
+        // title label
         titleLabel = new Label("YOU DIED.", skin, "title", Color.RED);
         table.add(titleLabel).padBottom(150).row();
 
-        //return to menu button
+        // return to menu button
         rtmButton = new TextButton("Return to menu", skin);
         rtmButton.getLabel().setFontScale(0.7f);
         table.add(rtmButton).size(300, 100).row();
@@ -52,16 +67,29 @@ public class GameOverScreen implements Screen {
             }
         });
 
+        // music
+        music = Gdx.audio.newMusic(Gdx.files.internal(
+            "Assets/Music (Crimson Hollow by Andy Martinez on itch.io)/Point of return(GameOverScreen).wav"));
+        music.setLooping(true);
+        music.setVolume(0.5f);
+        music.play();
+
         Gdx.input.setInputProcessor(stage);
     }
 
+    /**
+     * Renders the Game Over screen with a gradual fade-in effect.
+     * The title fades in first, then the button appears once the title
+     * reaches 40% opacity.
+     *
+     * @param delta time elapsed since last frame in seconds
+     */
     @Override
     public void render(float delta) {
-        // Draw your screen here. "delta" is the time since last render in seconds.
         ScreenUtils.clear(Color.BLACK);
         stage.act(delta);
         stage.draw();
-        //alpha modifiers for fading effect (title and button)
+
         titleAlpha = Math.min(titleAlpha + delta * 0.2f, 1f);
         if (titleAlpha >= 0.4f) {
             buttonAlpha = Math.min(buttonAlpha + delta * 0.5f, 1f);
@@ -70,35 +98,40 @@ public class GameOverScreen implements Screen {
         rtmButton.setColor(1, 1, 1, buttonAlpha);
     }
 
+    /**
+     * Updates the stage viewport on window resize.
+     *
+     * @param width  new window width in pixels
+     * @param height new window height in pixels
+     */
     @Override
     public void resize(int width, int height) {
-        // If the window is minimized on a desktop (LWJGL3) platform, width and height are 0, which causes problems.
-        // In that case, we don't resize anything, and wait for the window to be a normal size before updating.
-        if(width <= 0 || height <= 0) return;
-
-        // Resize your screen here. The parameters represent the new window size.
+        if (width <= 0 || height <= 0) return;
         stage.getViewport().update(width, height, true);
     }
 
-    @Override
-    public void pause() {
-        // Invoked when your application is paused.
-    }
+    @Override public void pause() {}
+    @Override public void resume() {}
 
-    @Override
-    public void resume() {
-        // Invoked when your application is resumed after pause.
-    }
-
+    /**
+     * Stops and disposes the music when another screen replaces this one.
+     */
     @Override
     public void hide() {
-        // This method is called when another screen replaces this one.
+        music.stop();
+        music.dispose();
     }
 
+    /**
+     * Disposes of all assets. Safely checks music for null before disposing.
+     */
     @Override
     public void dispose() {
-        // Destroy screen's assets here.
         stage.dispose();
         skin.dispose();
+        if (music != null) {
+            music.stop();
+            music.dispose();
+        }
     }
 }
