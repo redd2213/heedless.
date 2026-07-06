@@ -20,6 +20,16 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
+/**
+ * Plays back a recorded run using the frame-perfect state-based replay system.
+ * Rather than re-simulating physics from inputs, this screen restores the complete
+ * game state directly from each recorded {@link FrameState} snapshot, eliminating
+ * any possibility of delta time drift or physics divergence.
+ *
+ * <p>All game elements visible in {@link GameScreen} are also rendered here:
+ * player, enemy, collectibles, portal, girl animation, and HUD.
+ * Returns to {@link MenuScreen} when the replay finishes.
+ */
 public class ReplayScreen implements Screen {
     private Main game;
     private Player player;
@@ -33,71 +43,74 @@ public class ReplayScreen implements Screen {
     private TiledMapTileLayer layer;
     private Music music;
 
-    //girl animation
+    // girl animation — matches GameScreen position exactly
     private Animation<TextureRegion> girlAnim;
     private float girlStateTime = 0f;
     private static final float GIRL_X = 590f;
     private static final float GIRL_Y = 367f;
 
-    //hud
+    // HUD
     private Stage hudStage;
     private Skin skin;
     private Label healthLabel;
     private Label collectiblesLabel;
 
-    //replay data
+    // replay playback state
     private Array<FrameState> frames;
     private int frameIndex = 0;
 
+    /**
+     * Creates a new ReplayScreen and immediately loads the replay data for the given user.
+     *
+     * @param game   the main game instance
+     * @param userId the ID of the user whose replay should be loaded
+     */
     public ReplayScreen(Main game, int userId) {
         this.game = game;
         this.frames = game.database.loadReplay(userId);
     }
 
+    /**
+     * Initializes all game objects, camera, map, HUD and music.
+     * All coordinates and settings must exactly match {@link GameScreen}
+     * to ensure visual consistency between gameplay and replay.
+     */
     @Override
     public void show() {
         batch = new SpriteBatch();
-
-        //player
         player = new Player();
-
-        //enemy
         enemy = new Enemy(16, 256, 16, 496);
 
-        //collectibles
         collectibles = new Collectible[] {
             new Collectible(745, 176),
             new Collectible(105, 432),
             new Collectible(460, 400)
         };
 
-        //portal
         portal = new Portal(656, 360);
 
-        //girl animation
+        // girl animation
         Texture girlSheet = new Texture(Gdx.files.internal(
             "Assets/SPRITES/Dancing Girl Files/spritesheets/snap.png"));
         TextureRegion[][] girlTmp = TextureRegion.split(girlSheet,
             girlSheet.getWidth() / 8, girlSheet.getHeight());
         Array<TextureRegion> girlFrames = new Array<>();
-        for (int i = 0; i < 8; i++) {
-            girlFrames.add(girlTmp[0][i]);
-        }
+        for (int i = 0; i < 8; i++) girlFrames.add(girlTmp[0][i]);
         girlAnim = new Animation<>(0.1f, girlFrames);
 
-        //camera
+        // camera — same zoom as GameScreen
         float zoomFactor = 1.4f;
         camera = new OrthographicCamera();
         camera.setToOrtho(false,
             Gdx.graphics.getWidth() / zoomFactor,
             Gdx.graphics.getHeight() / zoomFactor);
 
-        //map
+        // map
         map = new TmxMapLoader().load("map.tmx");
         mapRenderer = new OrthogonalTiledMapRenderer(map);
         layer = (TiledMapTileLayer) map.getLayers().get("Tile Layer 1");
 
-        //hud
+        // HUD — matches GameScreen style
         skin = new Skin(Gdx.files.internal("pixthulhu/pixthulhu-ui.json"));
         hudStage = new Stage(new ScreenViewport());
 
@@ -111,8 +124,9 @@ public class ReplayScreen implements Screen {
         collectiblesLabel.setPosition(20, Gdx.graphics.getHeight() - 160);
         hudStage.addActor(collectiblesLabel);
 
-        //music setup
-        music = Gdx.audio.newMusic(Gdx.files.internal("Assets/Music (Crimson Hollow by Andy Martinez on itch.io)/Dungeon(GameScreen).wav"));
+        // music
+        music = Gdx.audio.newMusic(Gdx.files.internal(
+            "Assets/Music (Crimson Hollow by Andy Martinez on itch.io)/Dungeon(GameScreen).wav"));
         music.setLooping(true);
         music.setVolume(0.5f);
         music.play();
@@ -120,9 +134,17 @@ public class ReplayScreen implements Screen {
         Gdx.input.setInputProcessor(null);
     }
 
+    /**
+     * Advances the replay by one frame per render call.
+     * Restores all game object states directly from the recorded {@link FrameState},
+     * then renders the world and HUD identically to {@link GameScreen}.
+     * Returns to {@link MenuScreen} when all frames have been played.
+     *
+     * @param delta time elapsed since last frame in seconds (not used for physics)
+     */
     @Override
     public void render(float delta) {
-        //going back to menu
+        // end of replay
         if (frameIndex >= frames.size) {
             game.setScreen(new MenuScreen(game));
             return;
@@ -131,14 +153,11 @@ public class ReplayScreen implements Screen {
         FrameState fs = frames.get(frameIndex);
         frameIndex++;
 
-        //state restore
+        // restore all states directly from snapshot
         player.restoreState(fs);
+        if (!fs.enemyDead) enemy.restoreState(fs);
 
-        if (!fs.enemyDead) {
-            enemy.restoreState(fs);
-        }
-
-        //restore collectibles
+        // restore collectibles
         int collectedCount = 0;
         if (fs.stone0) collectibles[0].collect();
         if (fs.stone1) collectibles[1].collect();
@@ -147,16 +166,15 @@ public class ReplayScreen implements Screen {
         if (collectibles[1].isCollected()) collectedCount++;
         if (collectibles[2].isCollected()) collectedCount++;
 
-        //restore portal
+        // restore portal state
         if (fs.stone0 && fs.stone1 && fs.stone2 && fs.enemyDead) {
             if (!portal.isActive()) portal.activate();
         }
         portal.update(fs.delta);
 
-        //advance girl anim
         girlStateTime += fs.delta;
 
-        //draw
+        // draw
         ScreenUtils.clear(Color.BLACK);
         camera.position.set(player.getX(), player.getY(), 0);
         camera.update();
@@ -166,29 +184,23 @@ public class ReplayScreen implements Screen {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
-        //draw uncollected collectibles
         for (Collectible c : collectibles) {
             if (!c.isCollected()) {
                 c.update(fs.delta);
                 batch.draw(c.getCurrentFrame(),
-                    c.getX(), c.getY(),
-                    Collectible.SIZE, Collectible.SIZE);
+                    c.getX(), c.getY(), Collectible.SIZE, Collectible.SIZE);
             }
         }
 
-        //draw portal
         portal.draw(batch, fs.delta);
 
-        //draw girl
         TextureRegion girlFrame = girlAnim.getKeyFrame(girlStateTime, true);
         batch.draw(girlFrame, GIRL_X, GIRL_Y, 39 * 0.95f, 53 * 0.95f);
 
-        //draw player
         batch.draw(player.getCurrentFrameForReplay(),
             player.getX() - (Player.FRAME_WIDTH - 32) / 2f,
             player.getY());
 
-        //draw enemy if alive
         if (!fs.enemyDead) {
             enemy.advanceAnimation(fs.delta);
             batch.draw(enemy.getCurrentFrame(),
@@ -198,13 +210,18 @@ public class ReplayScreen implements Screen {
 
         batch.end();
 
-        //hud
         healthLabel.setText("HP: " + fs.playerHealth + "/ 5");
         collectiblesLabel.setText("Stones: " + collectedCount + "/3");
         hudStage.act(fs.delta);
         hudStage.draw();
     }
 
+    /**
+     * Updates camera and HUD viewport on window resize.
+     *
+     * @param width  new window width in pixels
+     * @param height new window height in pixels
+     */
     @Override
     public void resize(int width, int height) {
         if (width <= 0 || height <= 0) return;
@@ -214,14 +231,20 @@ public class ReplayScreen implements Screen {
     }
 
     @Override public void pause() {}
-
     @Override public void resume() {}
 
-    @Override public void hide() {
+    /**
+     * Stops and disposes the music when another screen replaces this one.
+     */
+    @Override
+    public void hide() {
         music.stop();
         music.dispose();
     }
 
+    /**
+     * Disposes of all assets to free GPU and CPU memory.
+     */
     @Override
     public void dispose() {
         batch.dispose();

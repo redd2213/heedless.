@@ -11,11 +11,16 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
+/**
+ * Displays the opening story text for Heedless immediately after {@link CutsceneScreen}.
+ * The narrative text fades in gradually, followed by a blinking "Press any key to continue"
+ * prompt. The player can skip directly to the game at any time by pressing ESC.
+ * Transitions to {@link GameScreen} on any key press once the text is fully visible.
+ */
 public class StoryScreen implements Screen {
     private Main game;
     private Stage stage;
     private Skin skin;
-
     private Label storyLabel;
     private Label continueLabel;
 
@@ -24,22 +29,32 @@ public class StoryScreen implements Screen {
     private boolean storyFullyVisible = false;
     private boolean waitingForInput = false;
 
-    //blink timer for "press any button"
+    // blink timer for "press any key" label
     private float blinkTimer = 0f;
     private boolean blinkVisible = true;
 
     private static final String STORY_TEXT =
-        "You watch the girl disappear through the abandoned church doors, the werewolf close behind her.\n\n" +
+        "You watch the girl disappear through the abandoned church doors, " +
+            "the werewolf close behind her.\n\n" +
             "Something stirs in your chest.\n" +
             "It's not courage, not duty,\n" +
             "just the simple certainty that you cannot walk away.\n\n" +
             "Your fists are clenched and your feet are already moving.\n" +
             "Find her and bring her home safe.";
 
+    /**
+     * Creates a new StoryScreen.
+     *
+     * @param game the main game instance used for screen navigation
+     */
     public StoryScreen(Main game) {
         this.game = game;
     }
 
+    /**
+     * Initializes the story text and continue prompt labels,
+     * both starting fully transparent for the fade-in effect.
+     */
     @Override
     public void show() {
         stage = new Stage(new ScreenViewport());
@@ -50,22 +65,30 @@ public class StoryScreen implements Screen {
         table.center();
         stage.addActor(table);
 
-        //text- centered and wraps at 800px
+        // story text — centered, wraps at 800px
         storyLabel = new Label(STORY_TEXT, skin);
         storyLabel.setWrap(true);
         storyLabel.setAlignment(com.badlogic.gdx.utils.Align.center);
-        storyLabel.setColor(1, 1, 1, 0f); // start invisible
+        storyLabel.setColor(1, 1, 1, 0f);
         table.add(storyLabel).width(800).padBottom(80).row();
 
-        //press any button label
+        // continue prompt
         continueLabel = new Label("Press any key to continue.", skin);
         continueLabel.setAlignment(com.badlogic.gdx.utils.Align.center);
-        continueLabel.setColor(1, 1, 1, 0f); // start invisible
+        continueLabel.setColor(1, 1, 1, 0f);
         table.add(continueLabel).row();
 
         Gdx.input.setInputProcessor(null);
     }
 
+    /**
+     * Renders the story screen each frame.
+     * Fades in the story text, then fades in and blinks the continue prompt.
+     * Pressing ESC skips directly to {@link GameScreen}.
+     * Pressing any key once the story is fully visible also transitions to {@link GameScreen}.
+     *
+     * @param delta time elapsed since last frame in seconds
+     */
     @Override
     public void render(float delta) {
         ScreenUtils.clear(Color.BLACK);
@@ -76,22 +99,19 @@ public class StoryScreen implements Screen {
             return;
         }
 
-        //fade in text
+        // fade in story text
         if (!storyFullyVisible) {
             storyAlpha = Math.min(storyAlpha + delta * 0.4f, 1f);
             storyLabel.setColor(1, 1, 1, storyAlpha);
-
             if (storyAlpha >= 1f) {
                 storyFullyVisible = true;
                 waitingForInput = true;
             }
         }
 
-        //fade in "press any key" after text is visible
+        // fade in and blink the continue prompt after story is visible
         if (storyFullyVisible) {
             continueAlpha = Math.min(continueAlpha + delta * 0.8f, 1f);
-
-            //blink effect added wehn fully visible
             if (continueAlpha >= 1f) {
                 blinkTimer += delta;
                 if (blinkTimer >= 0.6f) {
@@ -104,9 +124,8 @@ public class StoryScreen implements Screen {
             }
         }
 
-        //wait for any key press
-        if (waitingForInput && Gdx.input.isKeyJustPressed(
-            com.badlogic.gdx.Input.Keys.ANY_KEY)) {
+        // transition on any key press
+        if (waitingForInput && Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY)) {
             game.setScreen(new GameScreen(game));
             return;
         }
@@ -115,6 +134,12 @@ public class StoryScreen implements Screen {
         stage.draw();
     }
 
+    /**
+     * Updates the stage viewport on window resize.
+     *
+     * @param width  new window width in pixels
+     * @param height new window height in pixels
+     */
     @Override
     public void resize(int width, int height) {
         if (width <= 0 || height <= 0) return;
@@ -125,6 +150,9 @@ public class StoryScreen implements Screen {
     @Override public void resume() {}
     @Override public void hide() {}
 
+    /**
+     * Disposes of stage and skin assets to free memory.
+     */
     @Override
     public void dispose() {
         stage.dispose();

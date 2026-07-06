@@ -14,7 +14,12 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
-/** First screen of the application. Displayed after the application is created. */
+/**
+ * Displayed when the player completes the level by collecting all Energy Stones,
+ * defeating all enemies, and entering the portal.
+ * Features a "RUN COMPLETED." title that fades in, followed by buttons
+ * to return to the menu or watch the frame-perfect replay of the completed run.
+ */
 public class WinScreen implements Screen {
     private Main game;
     private Stage stage;
@@ -26,12 +31,21 @@ public class WinScreen implements Screen {
     private TextButton replayButton;
     private Music music;
 
+    /**
+     * Creates a new WinScreen.
+     *
+     * @param game the main game instance used for screen navigation
+     */
     public WinScreen(Main game) {
         this.game = game;
     }
+
+    /**
+     * Initializes the Win screen UI with title, return to menu button,
+     * and watch replay button. Starts the win music track.
+     */
     @Override
     public void show() {
-        // Prepare your screen here.
         stage = new Stage(new ScreenViewport());
         skin = new Skin(Gdx.files.internal("pixthulhu/pixthulhu-ui.json"));
 
@@ -40,11 +54,11 @@ public class WinScreen implements Screen {
         table.center();
         stage.addActor(table);
 
-        //title label
+        // title
         titleLabel = new Label("RUN COMPLETED.", skin, "title");
         table.add(titleLabel).padBottom(50).row();
 
-        //return to menu button
+        // return to menu button
         rtmButton = new TextButton("Return to menu", skin);
         rtmButton.getLabel().setFontScale(0.7f);
         table.add(rtmButton).size(300, 100).padBottom(40).row();
@@ -55,7 +69,7 @@ public class WinScreen implements Screen {
             }
         });
 
-        //replay button
+        // replay button
         replayButton = new TextButton("Watch Replay", skin);
         replayButton.getLabel().setFontScale(0.7f);
         table.add(replayButton).size(300, 100).row();
@@ -66,8 +80,9 @@ public class WinScreen implements Screen {
             }
         });
 
-        //music setup
-        music = Gdx.audio.newMusic(Gdx.files.internal("Assets/Music (Crimson Hollow by Andy Martinez on itch.io)/Cherry Orchard(WinScreen).wav"));
+        // music
+        music = Gdx.audio.newMusic(Gdx.files.internal(
+            "Assets/Music (Crimson Hollow by Andy Martinez on itch.io)/Cherry Orchard(WinScreen).wav"));
         music.setLooping(true);
         music.setVolume(0.5f);
         music.play();
@@ -75,13 +90,18 @@ public class WinScreen implements Screen {
         Gdx.input.setInputProcessor(stage);
     }
 
+    /**
+     * Renders the Win screen with a gradual fade-in effect.
+     * The title fades in first, then buttons appear once title reaches 40% opacity.
+     *
+     * @param delta time elapsed since last frame in seconds
+     */
     @Override
     public void render(float delta) {
-        // Draw your screen here. "delta" is the time since last render in seconds.
         ScreenUtils.clear(Color.BLACK);
         stage.act(delta);
         stage.draw();
-        //alpha modifiers for fading effect (title and button)
+
         titleAlpha = Math.min(titleAlpha + delta * 0.2f, 1f);
         if (titleAlpha >= 0.4f) {
             buttonAlpha = Math.min(buttonAlpha + delta * 0.5f, 1f);
@@ -91,36 +111,35 @@ public class WinScreen implements Screen {
         replayButton.setColor(1, 1, 1, buttonAlpha);
     }
 
+    /**
+     * Updates the stage viewport on window resize.
+     *
+     * @param width  new window width in pixels
+     * @param height new window height in pixels
+     */
     @Override
     public void resize(int width, int height) {
-        // If the window is minimized on a desktop (LWJGL3) platform, width and height are 0, which causes problems.
-        // In that case, we don't resize anything, and wait for the window to be a normal size before updating.
-        if(width <= 0 || height <= 0) return;
-
-        // Resize your screen here. The parameters represent the new window size.
+        if (width <= 0 || height <= 0) return;
         stage.getViewport().update(width, height, true);
     }
 
-    @Override
-    public void pause() {
-        // Invoked when your application is paused.
-    }
+    @Override public void pause() {}
+    @Override public void resume() {}
 
-    @Override
-    public void resume() {
-        // Invoked when your application is resumed after pause.
-    }
-
+    /**
+     * Stops and disposes the music when another screen replaces this one.
+     */
     @Override
     public void hide() {
-        // This method is called when another screen replaces this one.
         music.stop();
         music.dispose();
     }
 
+    /**
+     * Disposes of all assets. Safely checks music for null before disposing.
+     */
     @Override
     public void dispose() {
-        // Destroy screen's assets here.
         stage.dispose();
         skin.dispose();
         if (music != null) {

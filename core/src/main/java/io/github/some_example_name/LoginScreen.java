@@ -10,8 +10,12 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
-
-/** First screen of the application. Displayed after the application is created. */
+/**
+ * The login and registration screen for Heedless.
+ * Allows existing users to authenticate and new users to create an account.
+ * On successful login, stores the user's ID in {@link Main#currentUserId}
+ * and navigates to {@link MenuScreen}.
+ */
 public class LoginScreen implements Screen {
     private Main game;
     private Stage stage;
@@ -20,44 +24,51 @@ public class LoginScreen implements Screen {
     private TextField passwordField;
     private Label feedbackLabel;
 
+    /**
+     * Creates a new LoginScreen.
+     *
+     * @param game the main game instance used for screen navigation and database access
+     */
     public LoginScreen(Main game) {
         this.game = game;
     }
 
+    /**
+     * Initializes the login form with username/password fields,
+     * login and register buttons, and a feedback label for error messages.
+     */
     @Override
     public void show() {
-        // Prepare your screen here.
         stage = new Stage(new ScreenViewport());
         skin = new Skin(Gdx.files.internal("pixthulhu/pixthulhu-ui.json"));
         Gdx.input.setInputProcessor(stage);
 
-        //table init
         Table table = new Table();
         table.setFillParent(true);
         table.center();
         stage.addActor(table);
 
-        //title
+        // title
         Label titleLabel = new Label("Login", skin, "title");
         table.add(titleLabel).padBottom(30).row();
 
-        //username field
+        // username field
         usernameField = new TextField("", skin);
         usernameField.setMessageText("Username");
         table.add(usernameField).width(500).padBottom(10).row();
 
-        //password field
+        // password field
         passwordField = new TextField("", skin);
         passwordField.setMessageText("Password");
         passwordField.setPasswordMode(true);
         passwordField.setPasswordCharacter('*');
         table.add(passwordField).width(500).padBottom(20).row();
 
-        //feedback label
+        // feedback label — shows success or error messages
         feedbackLabel = new Label("", skin);
         table.add(feedbackLabel).padBottom(10).row();
 
-        //login button
+        // login button
         TextButton loginButton = new TextButton("Login", skin);
         table.add(loginButton).size(300, 100).padBottom(40).row();
         loginButton.addListener(new ClickListener() {
@@ -73,7 +84,7 @@ public class LoginScreen implements Screen {
 
                 int userId = game.database.loginUser(username, password);
                 if (userId != -1) {
-                    game.currentUserId = userId; // store the real user ID
+                    game.currentUserId = userId;
                     game.setScreen(new MenuScreen(game));
                 } else {
                     feedbackLabel.setText("Invalid username or password.");
@@ -81,9 +92,9 @@ public class LoginScreen implements Screen {
             }
         });
 
-        //register button
+        // register button
         TextButton registerButton = new TextButton("Register", skin);
-        table.add(registerButton).size(300,100).row();
+        table.add(registerButton).size(300, 100).row();
         registerButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -104,42 +115,39 @@ public class LoginScreen implements Screen {
         });
     }
 
+    /**
+     * Clears the screen and renders the login form each frame.
+     *
+     * @param delta time elapsed since last frame in seconds
+     */
     @Override
     public void render(float delta) {
-        // Draw your screen here. "delta" is the time since last render in seconds.
         ScreenUtils.clear(Color.BLACK);
         stage.act(delta);
         stage.draw();
     }
 
+    /**
+     * Updates the stage viewport on window resize.
+     *
+     * @param width  new window width in pixels
+     * @param height new window height in pixels
+     */
     @Override
     public void resize(int width, int height) {
-        // If the window is minimized on a desktop (LWJGL3) platform, width and height are 0, which causes problems.
-        // In that case, we don't resize anything, and wait for the window to be a normal size before updating.
-        if(width <= 0 || height <= 0) return;
+        if (width <= 0 || height <= 0) return;
         stage.getViewport().update(width, height, true);
-
-        // Resize your screen here. The parameters represent the new window size.
     }
 
-    @Override
-    public void pause() {
-        // Invoked when your application is paused.
-    }
+    @Override public void pause() {}
+    @Override public void resume() {}
+    @Override public void hide() {}
 
-    @Override
-    public void resume() {
-        // Invoked when your application is resumed after pause.
-    }
-
-    @Override
-    public void hide() {
-        // This method is called when another screen replaces this one.
-    }
-
+    /**
+     * Disposes of stage and skin assets to free memory.
+     */
     @Override
     public void dispose() {
-        // Destroy screen's assets here.
         stage.dispose();
         skin.dispose();
     }
