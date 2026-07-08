@@ -1,6 +1,7 @@
 package io.github.some_example_name;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
@@ -54,6 +55,7 @@ public class ReplayScreen implements Screen {
     private Skin skin;
     private Label healthLabel;
     private Label collectiblesLabel;
+    private Label skipLabel;
 
     // replay playback state
     private Array<FrameState> frames;
@@ -123,6 +125,11 @@ public class ReplayScreen implements Screen {
         collectiblesLabel.setFontScale(0.5f);
         collectiblesLabel.setPosition(20, Gdx.graphics.getHeight() - 160);
         hudStage.addActor(collectiblesLabel);
+
+        // skip button overlay
+        skipLabel = new Label("Press ESC to skip", skin);
+        skipLabel.setFontScale(0.8f);
+        hudStage.addActor(skipLabel);
 
         // music
         music = Gdx.audio.newMusic(Gdx.files.internal(
@@ -209,6 +216,12 @@ public class ReplayScreen implements Screen {
         }
 
         batch.end();
+
+        //ESC skip for replay
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+            game.setScreen(new MenuScreen(game));
+            return;
+        }
 
         healthLabel.setText("HP: " + fs.playerHealth + "/ 5");
         collectiblesLabel.setText("Stones: " + collectedCount + "/3");
