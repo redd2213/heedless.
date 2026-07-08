@@ -147,12 +147,14 @@ public class GameScreen implements Screen {
         collectiblesLabel.setPosition(20, Gdx.graphics.getHeight() - 160);
         hudStage.addActor(collectiblesLabel);
 
-        objectiveLabel = new Label(
+        Table objectiveTable = new Table();
+        objectiveTable.setFillParent(true);
+        objectiveTable.bottom().padBottom(50);
+        Label objectiveLabel = new Label(
             "Objective: Collect all the Energy Stones and slay all the monsters " +
                 "to unlock the Portal to the next room!", skin);
-        objectiveLabel.setFontScale(1f);
-        objectiveLabel.setPosition(300, Gdx.graphics.getHeight() - 1050);
-        hudStage.addActor(objectiveLabel);
+        objectiveTable.add(objectiveLabel);
+        hudStage.addActor(objectiveTable);
 
         // attack tutorial — fades in then out automatically
         Texture attackTexture = new Texture(Gdx.files.internal(
