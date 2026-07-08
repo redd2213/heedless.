@@ -49,7 +49,7 @@ public class GameScreen implements Screen {
     private Stage hudStage;
     private Label healthLabel;
     private Label pauseLabel;
-    private Label objectiveLabel;
+    private Label restartLabel;
     private Skin skin;
     private FrameRecorder recorder;
     private int currentUserId;
@@ -147,12 +147,14 @@ public class GameScreen implements Screen {
         collectiblesLabel.setPosition(20, Gdx.graphics.getHeight() - 160);
         hudStage.addActor(collectiblesLabel);
 
-        objectiveLabel = new Label(
+        Table objectiveTable = new Table();
+        objectiveTable.setFillParent(true);
+        objectiveTable.bottom().padBottom(50);
+        Label objectiveLabel = new Label(
             "Objective: Collect all the Energy Stones and slay all the monsters " +
                 "to unlock the Portal to the next room!", skin);
-        objectiveLabel.setFontScale(1f);
-        objectiveLabel.setPosition(300, Gdx.graphics.getHeight() - 1050);
-        hudStage.addActor(objectiveLabel);
+        objectiveTable.add(objectiveLabel);
+        hudStage.addActor(objectiveTable);
 
         // attack tutorial — fades in then out automatically
         Texture attackTexture = new Texture(Gdx.files.internal(
@@ -178,9 +180,16 @@ public class GameScreen implements Screen {
         Table pauseTable = new Table();
         pauseTable.setFillParent(true);
         pauseTable.center();
+
         pauseLabel = new Label("PAUSED", skin, "title");
         pauseLabel.setVisible(false);
-        pauseTable.add(pauseLabel);
+        pauseTable.add(pauseLabel).padBottom(30).row();
+
+        restartLabel = new Label("Press R to restart level.", skin);
+        restartLabel.setFontScale(0.8f);
+        restartLabel.setVisible(false);
+        pauseTable.add(restartLabel).row();
+
         hudStage.addActor(pauseTable);
 
         // replay recorder
@@ -210,10 +219,15 @@ public class GameScreen implements Screen {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             paused = !paused;
             pauseLabel.setVisible(paused);
+            restartLabel.setVisible(paused);
         }
 
         // freeze everything when paused, only draw HUD
         if (paused) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+                game.setScreen(new GameScreen(game));
+                return;
+            }
             hudStage.act(delta);
             hudStage.draw();
             return;
