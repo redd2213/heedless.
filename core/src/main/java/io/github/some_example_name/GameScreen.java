@@ -49,7 +49,7 @@ public class GameScreen implements Screen {
     private Stage hudStage;
     private Label healthLabel;
     private Label pauseLabel;
-    private Label objectiveLabel;
+    private Label restartLabel;
     private Skin skin;
     private FrameRecorder recorder;
     private int currentUserId;
@@ -180,9 +180,16 @@ public class GameScreen implements Screen {
         Table pauseTable = new Table();
         pauseTable.setFillParent(true);
         pauseTable.center();
+
         pauseLabel = new Label("PAUSED", skin, "title");
         pauseLabel.setVisible(false);
-        pauseTable.add(pauseLabel);
+        pauseTable.add(pauseLabel).padBottom(30).row();
+
+        restartLabel = new Label("Press R to restart level.", skin);
+        restartLabel.setFontScale(0.8f);
+        restartLabel.setVisible(false);
+        pauseTable.add(restartLabel).row();
+
         hudStage.addActor(pauseTable);
 
         // replay recorder
@@ -212,10 +219,15 @@ public class GameScreen implements Screen {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             paused = !paused;
             pauseLabel.setVisible(paused);
+            restartLabel.setVisible(paused);
         }
 
         // freeze everything when paused, only draw HUD
         if (paused) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+                game.setScreen(new GameScreen(game));
+                return;
+            }
             hudStage.act(delta);
             hudStage.draw();
             return;
